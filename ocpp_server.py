@@ -39,7 +39,6 @@ async def on_connect(websocket, path):
 
     await cp.start()
 
-
 async def main():
     server = await websockets.serve(
         on_connect,
