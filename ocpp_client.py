@@ -87,6 +87,49 @@ class ChargePoint(cp):
 
         print(response.total_cost)
 
+    async def send_reset(self,typee):
+        request = call.ResetPayload(
+                type=typee
+        )
+        response = await self.call(request)
+
+        if response.status=='Accepted':
+            print('Resetting')
+            print(response)
+
+    async def send_change_availability(self,id,status):
+        request = call.ChangeAvailabilityPayload(
+                operational_status=status,
+                evse_id=id
+        )
+        response = await self.call(request)
+
+        if response.status=='Accepted':
+            print('Changing availability')
+            print(response)
+
+    async def send_status_notification(self,status,evse_id,connector_id):
+        request = call.StatusNotificationPayload(
+                timestamp=datetime.utcnow().isoformat(),
+                connector_status=status,
+                evse_id=evse_id,
+                connector_id=connector_id
+        )
+        response = await self.call(request)
+
+        print(response)
+
+    async def send_notify_event(self,tbc,seqNo,trigger,actualValue,cleared,eventNotificationType,componentName,variableName):
+        request = call.NotifyEventPayload(
+                generated_at=datetime.utcnow().isoformat(),
+                tbc=tbc,
+                seq_no=seqNo,
+                event_data=[{'eventId': 1234, 'timestamp': 'datetime', 'trigger': trigger, 'actualValue': actualValue,'cleared': cleared, 'eventNotificationType': eventNotificationType, 'component': {'name': componentName}, 'variable': {'name': variableName}}]
+        )
+        response = await self.call(request)
+
+        print(response)
+
 async def main():
     async with websockets.connect(
         'ws://192.168.43.217:9000/CP_1',
@@ -95,7 +138,7 @@ async def main():
 
         cp = ChargePoint('CP_1', ws)
 
-        await asyncio.gather(cp.start(), cp.send_boot_notification('ModelName','VendorName','PowerUp'),cp.send_transaction_event('Ended','Authorized',12,'1345'))
+        await asyncio.gather(cp.start(), cp.send_boot_notification('ModelName','VendorName','PowerUp'),cp.send_notify_event(False,0,'Alerting','actualValue',True,'HardWiredNotification','comp','var'))
         
         
 
