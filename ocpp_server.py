@@ -16,7 +16,7 @@ class ChargePoint(cp):
         )
 
     @on('Authorize')
-    def on_authorize(self, id_token, evse_id, **kwargs):
+    def on_authorize(self, id_token, **kwargs):
         # can add certificate _15118_certificate_hash_data
         return call_result.AuthorizePayload(
             id_token_info = {
@@ -28,6 +28,8 @@ class ChargePoint(cp):
             # certificate_status =
             # evse_id =
         )
+
+    
 
 async def on_connect(websocket, path):
     """ For every new charge point that connects, create a ChargePoint instance
