@@ -10,9 +10,23 @@ class ChargePoint(cp):
     @on('BootNotification')
     def on_boot_notitication(self, charging_station, reason, **kwargs):
         return call_result.BootNotificationPayload(
-            current_time=datetime.utcnow().isoformat(),
-            interval=10,
-            status='Accepted'
+            current_time = datetime.utcnow().isoformat(),
+            interval = 10,
+            status ='Accepted'
+        )
+
+    @on('Authorize')
+    def on_authorize(self, id_token, evse_id, **kwargs):
+        # can add certificate _15118_certificate_hash_data
+        return call_result.AuthorizePayload(
+            id_token_info = {
+                'status' : 'Accepted',
+                # 'cacheExpiryDateTime'
+                # 'ChargePriority'
+                # 'language1'        
+            }
+            # certificate_status =
+            # evse_id =
         )
 
 async def on_connect(websocket, path):
@@ -25,7 +39,7 @@ async def on_connect(websocket, path):
 
     await cp.start()
 
-# First Commit
+
 async def main():
     server = await websockets.serve(
         on_connect,
@@ -35,7 +49,6 @@ async def main():
     )
 
     await server.wait_closed()
-
 
 if __name__ == '__main__':
     asyncio.run(main())
