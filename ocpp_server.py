@@ -75,7 +75,36 @@ class ChargePoint(cp):
         return call_result.TransactionEventPayload(
             total_cost = 1500.00,
             charging_priority = 2
-        )    
+        ) 
+
+    @on('Reset')
+    def reset(self, type, **kwargs):
+        print(type + ' reset requested')
+        return call_result.ResetPayload(
+            status = 'Accepted'
+        )
+
+    @on('ChangeAvailability')
+    def change_availability(self, operational_status, **kwargs):
+        print('Availability changed to ' + operational_status)
+        return call_result.ChangeAvailabilityPayload(
+            status = 'Accepted'
+        )
+
+    @on('StatusNotification')
+    def status_notification(self, timestamp, connector_status, evse_id, connector_id):
+        print(timestamp + ' Connector of '+ str(connector_id)+ ' is ' + connector_status)
+        return call_result.StatusNotificationPayload(
+
+        )
+
+    @on('NotifyEvent')
+    def notify_event(self, generated_at, tbc, seq_no, event_data, **kwargs):
+        print('An event occured at '+ generated_at)
+        return call_result.NotifyEventPayload(
+
+        )
+
 
 
 async def on_connect(websocket, path):
