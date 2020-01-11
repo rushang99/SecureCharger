@@ -9,7 +9,7 @@ from ocpp.v20 import call_result
 class ChargePoint(cp):
     @on('BootNotification')
     def on_boot_notitication(self, charging_station, reason, **kwargs):
-        print('BootNotification')
+        print(charging_station['model'] + ' from ' + charging_station['vendor_name'] + ' has booted.')
         return call_result.BootNotificationPayload(
             current_time = datetime.utcnow().isoformat(),
             interval = 10,
@@ -18,7 +18,7 @@ class ChargePoint(cp):
 
     @on('Authorize')
     def on_authorize(self, id_token, **kwargs):
-        print('Authorize')
+        print(id_token + 'authorized successfully.')
         # can add certificate _15118_certificate_hash_data
         return call_result.AuthorizePayload(
             id_token_info = {
@@ -33,7 +33,7 @@ class ChargePoint(cp):
 
     @on('CancelReservation')
     def on_cancel_reservation(self, reservation_id):
-        print('CancelReservation')
+        print('Reservation of '+ reservation_id + ' cancelled')
         return call_result.CancelReservationPayload(
             status = 'Accepted'
         )
@@ -49,7 +49,34 @@ class ChargePoint(cp):
             }]
         )
 
-    
+    @on('GetVariables')
+    def get_variables(self, get_variable_data):
+        print('GetVariables')
+        return call_result.GetVariablesPayload(
+            get_variable_result = [
+                {
+                    'attributeStatus':'Accepted',
+                    'component' : {'name': 'ComponentType'}, 
+                    'variable': {'name': 'VariableType'}
+                }
+            ]
+        )
+
+    @on('GetReport')
+    def get_report(self, request_id, **kwargs):
+        print('GetReport')
+        return call_result.GetReportPayload(
+            status  = 'Accepted'
+        )
+
+    @on('TransactionEvent')
+    def transaction_event(self, event_type, timestamp, trigger_reason, seq_no, transaction_data, **kwargs):
+        print('TransactionEvent')
+        return call_result.TransactionEventPayload(
+            total_cost = 1500.00,
+            charging_priority = 2
+        )    
+
 
 async def on_connect(websocket, path):
     """ For every new charge point that connects, create a ChargePoint instance
@@ -58,7 +85,6 @@ async def on_connect(websocket, path):
     """
     charge_point_id = path.strip('/')
     cp = ChargePoint(charge_point_id, websocket)
-
     await cp.start()
 
 async def main():
