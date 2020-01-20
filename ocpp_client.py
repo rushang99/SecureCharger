@@ -1,5 +1,7 @@
 import asyncio
 import websockets
+import pathlib
+import ssl
 from datetime import datetime
 from ocpp.v20 import call
 from ocpp.v20 import ChargePoint as cp
@@ -130,15 +132,19 @@ class ChargePoint(cp):
 
         print(response)
 
+ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+ssl_context.load_cert_chain("cert.pem")
+
 async def main():
     async with websockets.connect(
-        'ws://192.168.43.217:9000/CP_1',
-         subprotocols=['ocpp2.0']
+        'ws://192.168.43.177:9000/CP_1',
+         subprotocols=['ocpp2.0'],
+         ssl=ssl_context
     ) as ws:
 
         cp = ChargePoint('CP_1', ws)
 
-        await asyncio.gather(cp.start(), cp.send_boot_notification('ModelName','VendorName','PowerUp'),cp.send_notify_event(False,0,'Alerting','actualValue',True,'HardWiredNotification','comp','var'))
+        await asyncio.gather(cp.start(), cp.send_boot_notification('Tesla','VendorName','PowerUp'),cp.send_notify_event(False,0,'Alerting','actualValue',True,'HardWiredNotification','comp','var'))
         
         
 
