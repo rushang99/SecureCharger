@@ -5,6 +5,8 @@ from datetime import datetime
 from ocpp.routing import on
 from ocpp.v20 import ChargePoint as cp
 from ocpp.v20 import call_result
+import pathlib
+import ssl
 
 class ChargePoint(cp):
     @on('BootNotification')
@@ -116,12 +118,17 @@ async def on_connect(websocket, path):
     cp = ChargePoint(charge_point_id, websocket)
     await cp.start()
 
+
+ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+ssl_context.load_cert_chain("cert.pem")
 async def main():
     server = await websockets.serve(
         on_connect,
         '0.0.0.0',
         9000,
-        subprotocols=['ocpp2.0']
+        subprotocols=['ocpp2.0'],
+        ssl=ssl_context
+        
     )
 
     await server.wait_closed()
