@@ -39,9 +39,9 @@ class ChargePoint(cp):
             print("Authorization Sucessful")
             print(response)
 
-    async def send_cancel_reservation(self):
+    async def send_cancel_reservation(self, reservId):
         request = call.CancelReservationPayload(
-                reservation_id=1234567
+                reservation_id= reservId
         )
         response = await self.call(request)
         if response.status == 'Accepted':
@@ -68,9 +68,9 @@ class ChargePoint(cp):
             print("Variables Recieved")
             print(response) 
 
-    async def send_get_report(self):
+    async def send_get_report(self, reportId):
         request = call.GetReportPayload(
-                request_id=123456789
+                request_id = reportId
         )
         response = await self.call(request)
 
@@ -133,20 +133,19 @@ class ChargePoint(cp):
 
         print(response)
 
-# ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-
-# ssl_context.load_verify_locations("cert.pem")
+ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+ssl_context.load_verify_locations("cert.pem")
 
 async def main():
     
     async with websockets.connect(
-        'ws://localhost:9000/CP_1',
-         subprotocols=['ocpp2.0']
-        #  ssl=ssl_context
+        'wss://192.168.43.217:9000/CP_1',
+         subprotocols=['ocpp2.0'],
+         ssl=ssl_context
     ) as ws:
         
         cp = ChargePoint('CP_1', ws)
-        # loop = asyncio.get_event_loop()
+        print("")
         print("Please enter a message to send to the CSMS")
         message = str(input())
         if message == 'Boot Notification':
@@ -159,14 +158,19 @@ async def main():
                 await asyncio.gather(cp.start(), cp.send_boot_notification(model,vendorName,reason), asyncio.ensure_future(main()))                
 
         elif message == 'Notify Event':
+                print
                 await asyncio.gather(cp.start(), cp.send_notify_event(False,0,'Alerting','actualValue',True,'HardWiredNotification','comp','var'), asyncio.ensure_future(main()))
 
+        elif message == "Get Report":
+                print("Enter Report Id")
+                reportId = int(input())
+                print(reportId)
+                await asyncio.gather(cp.start(), cp.send_get_report(reportId), asyncio.ensure_future(main()))
         else:
                 print("Please enter a valid message")
 
 if __name__ == '__main__':
         asyncio.run(main())
-        print('hey')
 
 
     
