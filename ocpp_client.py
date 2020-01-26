@@ -5,6 +5,7 @@ import ssl
 from datetime import datetime
 from ocpp.v20 import call
 from ocpp.v20 import ChargePoint as cp
+import sys
 
 
 class ChargePoint(cp):
@@ -132,22 +133,40 @@ class ChargePoint(cp):
 
         print(response)
 
-ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-ssl_context.load_cert_chain("cert.pem")
+# ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+
+# ssl_context.load_verify_locations("cert.pem")
 
 async def main():
+    
     async with websockets.connect(
-        'ws://192.168.43.177:9000/CP_1',
-         subprotocols=['ocpp2.0'],
-         ssl=ssl_context
+        'ws://localhost:9000/CP_1',
+         subprotocols=['ocpp2.0']
+        #  ssl=ssl_context
     ) as ws:
-
+        
         cp = ChargePoint('CP_1', ws)
+        # loop = asyncio.get_event_loop()
+        print("Please enter a message to send to the CSMS")
+        message = str(input())
+        if message == 'Boot Notification':
+                print("Enter Model:")
+                model  = str(input())
+                print("Enter Vendor Name:")
+                vendorName = str(input())
+                print("Enter Reason:")
+                reason = str(input())                
+                await asyncio.gather(cp.start(), cp.send_boot_notification(model,vendorName,reason), asyncio.ensure_future(main()))                
 
-        await asyncio.gather(cp.start(), cp.send_boot_notification('Tesla','VendorName','PowerUp'),cp.send_notify_event(False,0,'Alerting','actualValue',True,'HardWiredNotification','comp','var'))
-        
-        
+        elif message == 'Notify Event':
+                await asyncio.gather(cp.start(), cp.send_notify_event(False,0,'Alerting','actualValue',True,'HardWiredNotification','comp','var'), asyncio.ensure_future(main()))
 
+        else:
+                print("Please enter a valid message")
 
 if __name__ == '__main__':
-    asyncio.run(main())
+        asyncio.run(main())
+        print('hey')
+
+
+    

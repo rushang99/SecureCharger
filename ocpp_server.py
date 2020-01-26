@@ -119,16 +119,15 @@ async def on_connect(websocket, path):
     await cp.start()
 
 
-ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-ssl_context.load_cert_chain("cert.pem")
+# ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+# ssl_context.load_cert_chain("cert.pem")
 async def main():
     server = await websockets.serve(
         on_connect,
         '0.0.0.0',
         9000,
-        subprotocols=['ocpp2.0'],
-        ssl=ssl_context
-        
+        subprotocols=['ocpp2.0']
+        # ssl=ssl_context        
     )
 
     await server.wait_closed()
