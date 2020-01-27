@@ -134,12 +134,14 @@ class ChargePoint(cp):
         print(response)
 
 ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+ssl_context.check_hostname = False
+ssl_context.verify_mode = ssl.CERT_NONE
 ssl_context.load_verify_locations("cert.pem")
 
 async def main():
     
     async with websockets.connect(
-        'wss://192.168.43.217:9000/CP_1',
+        'wss://192.168.43.177:9000/CP_1',
          subprotocols=['ocpp2.0'],
          ssl=ssl_context
     ) as ws:
