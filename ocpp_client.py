@@ -7,6 +7,7 @@ from ocpp.v20 import call
 from ocpp.v20 import ChargePoint as cp
 import sys
 
+auth_flag = False
 
 class ChargePoint(cp):
 
@@ -36,8 +37,11 @@ class ChargePoint(cp):
         )
         response = await self.call(request)
         if response.id_token_info['status'] == 'Accepted':
+            auth_flag = True
             print("Authorization Sucessful")
             print(response)
+        else:
+            print("Invalid Name/Id. Please try again!")
 
     async def send_cancel_reservation(self, reservId):
         request = call.CancelReservationPayload(
@@ -87,7 +91,7 @@ class ChargePoint(cp):
                 transaction_data={'id': id}
         )
         response = await self.call(request)
-
+        print(response)
         print(response.total_cost)
 
     async def send_reset(self,typee):
@@ -138,10 +142,14 @@ ssl_context.check_hostname = False
 ssl_context.verify_mode = ssl.CERT_NONE
 ssl_context.load_verify_locations("cert.pem")
 
+
+
+
+
 async def main():
     
     async with websockets.connect(
-        'wss://192.168.43.177:9000/CP_1',
+        'wss://192.168.43.29:9000/CP_1',
          subprotocols=['ocpp2.0'],
          ssl=ssl_context
     ) as ws:
@@ -168,6 +176,12 @@ async def main():
                 reportId = int(input())
                 print(reportId)
                 await asyncio.gather(cp.start(), cp.send_get_report(reportId), asyncio.ensure_future(main()))
+        elif message == "Authorize":
+                print("Enter Name/Id")
+                name = str(input())
+                await asyncio.gather(cp.start(), cp.send_authorize(name, 'Central'), asyncio.ensure_future(main())) 
+        elif message == "Transaction":
+                await asyncio.gather(cp.start(),cp.send_transaction_event('Started', 'Authorized', 1234, 'Hello World'), asyncio.ensure_future(main())) 
         else:
                 print("Please enter a valid message")
 
