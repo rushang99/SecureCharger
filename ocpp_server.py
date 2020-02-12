@@ -7,8 +7,31 @@ from ocpp.v20 import ChargePoint as cp
 from ocpp.v20 import call_result
 import pathlib
 import ssl
+import pyrebase
+
+config = {
+    "apiKey": "AIzaSyAGas29t240FwqdvXjdwzz4kITTN2Ix1ro",
+    "authDomain": "charger-1eb48.firebaseapp.com",
+    "databaseURL": "https://charger-1eb48.firebaseio.com",
+    "projectId": "charger-1eb48",
+    "storageBucket": "charger-1eb48.appspot.com",
+    "messagingSenderId": "430093083458",
+    "serviceAccount": "/home/raghav/SecureCharger/secure.json"
+}
+
+
+firebase = pyrebase.initialize_app(config)
+auth = firebase.auth()
+email = "guptaraghav1999@gmail.com"
+password = "12345678"
+user = auth.sign_in_with_email_and_password(email,password)
+db = firebase.database()
+
+cost='0'
+
 
 class ChargePoint(cp):
+
     @on('BootNotification')
     def on_boot_notitication(self, charging_station, reason, **kwargs):
         print(charging_station['model'] + ' from ' + charging_station['vendor_name'] + ' has booted.')
@@ -20,18 +43,47 @@ class ChargePoint(cp):
 
     @on('Authorize')
     def on_authorize(self, id_token, **kwargs):
-        print(id_token + 'authorized successfully.')
-        # can add certificate _15118_certificate_hash_data
-        return call_result.AuthorizePayload(
-            id_token_info = {
-                'status' : 'Accepted',
-                # 'cacheExpiryDateTime'
-                # 'ChargePriority'
-                # 'language1'        
-            }
-            # certificate_status =
-            # evse_id =
-        )
+        name=id_token['id_token']
+        flag=False
+        all_users = db.child("Users").get()
+        global cost
+        for user in all_users.each():
+            # print(user.key())
+            # print(user.val()['name'])
+            if user.val()['username']==name:
+                flag=True
+                break
+        if flag:
+            print(name + ' authorized successfully.')
+            # can add certificate _15118_certificate_hash_data
+
+            cost=user.val()['chargingCost']
+            return call_result.AuthorizePayload(
+                id_token_info = {
+                    'status' : 'Accepted',
+                    # 'cacheExpiryDateTime'
+                    # 'ChargePriority'
+                    # 'language1'        
+                }
+                # certificate_status =
+                # evse_id =
+            )
+
+        else:
+            print(name + ' authorized unsuccessfully.')
+            # can add certificate _15118_certificate_hash_data
+            
+            cost='0'
+            return call_result.AuthorizePayload(
+                id_token_info = {
+                    'status' : 'Invalid',
+                    # 'cacheExpiryDateTime'
+                    # 'ChargePriority'
+                    # 'language1'        
+                }
+                # certificate_status =
+                # evse_id =
+            )            
 
     @on('CancelReservation')
     def on_cancel_reservation(self, reservation_id):
@@ -74,8 +126,9 @@ class ChargePoint(cp):
     @on('TransactionEvent')
     def transaction_event(self, event_type, timestamp, trigger_reason, seq_no, transaction_data, **kwargs):
         print('TransactionEvent')
+        global cost
         return call_result.TransactionEventPayload(
-            total_cost = 1500.00,
+            total_cost = int(cost),
             charging_priority = 2
         ) 
 
@@ -132,5 +185,5 @@ async def main():
 
     await server.wait_closed()
 
-if __name__ == '__main__':
+if _name_ == '_main_':
     asyncio.run(main())
