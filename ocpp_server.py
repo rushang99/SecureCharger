@@ -260,5 +260,5 @@ async def main():
 
     await server.wait_closed()
 
-if _name_ == '_main_':
+if __name__ == '__main__':
     asyncio.run(main())
