@@ -285,5 +285,5 @@ async def main():
         else:
                 print("Please enter a valid message")
 
-if __name__ == '_main_':
+if __name__ == '__main__':
         asyncio.run(main())
