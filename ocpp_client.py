@@ -137,6 +137,106 @@ class ChargePoint(cp):
 
         print(response)
 
+    async def send_clear_cache(self):
+        request = call.ClearCachePayload(
+        	
+        )
+        response = await self.call(request)
+
+        print(response)
+
+    async def send_clear_charging_profile(self,evseid):
+        request = call.ClearChargingProfilePayload(
+        	evse_id=evseid
+        )
+        response = await self.call(request)
+
+        print(response)
+
+    async def send_clear_display_message(self,id):
+        request = call.ClearDisplayMessage(
+        	id=id
+        )
+        response = await self.call(request)
+
+        print(response)
+
+    async def send_clear_variable_monitoring(self,id):
+        request = call.ClearVariableMonitoringPayload(
+        	id=id
+        )
+        response = await self.call(request)
+
+        print(response)
+
+    async def send_cost_updated(self,totalCost,transactionId):
+        request = call.CostUpdatedPayload(
+        	total_cost=totalCost,
+        	transaction_id=transactionId
+        )
+        response = await self.call(request)
+
+        print(response)
+
+    async def send_firmware_status_notification(self,status,requestid):
+        request = call.FirmwareStatusNotificationPayload(
+        	request_id=requestid,
+        	status=status
+        )
+        response = await self.call(request)
+
+        print(response)
+
+    async def send_get_charging_profiles(self,chargingProfile):
+        request = call.GetChargingProfilesPayload(
+        	charging_profile=chargingProfile
+        )
+        response = await self.call(request)
+
+        print(response)
+
+    async def send_get_composite_schedule(self,evseid,duration):
+        request = call.GetCompositeSchedulePayload(
+        	evse_id=evseid,
+        	duration=duration
+        )
+        response = await self.call(request)
+
+        print(response)
+
+    async def send_get_display_messages(self,requestid):
+        request = call.GetDisplayMessagesPayload(
+        	request_id=requestid
+        )
+        response = await self.call(request)
+
+        print(response)
+
+    async def send_get_local_list_version(self):
+        request = call.GetLocalListVersionPayload(
+        	
+        )
+        response = await self.call(request)
+
+        print(response)
+
+    async def send_get_monitoring_report(self,requestid):
+        request = call.GetMonitoringReportPayload(
+        	request_id=requestid
+        )
+        response = await self.call(request)
+
+        print(response)
+
+    async def send_get_transaction_status(self,transactionId):
+        request = call.GetTransactionStatusPayload(
+        	transaction_id=transactionId
+        )
+        response = await self.call(request)
+
+        print(response)
+
+
 ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
 ssl_context.check_hostname = False
 ssl_context.verify_mode = ssl.CERT_NONE
@@ -149,7 +249,7 @@ ssl_context.load_verify_locations("cert.pem")
 async def main():
     
     async with websockets.connect(
-        'wss://192.168.43.29:9000/CP_1',
+        'wss://192.168.43.:9000/CP_1',
          subprotocols=['ocpp2.0'],
          ssl=ssl_context
     ) as ws:
@@ -185,5 +285,5 @@ async def main():
         else:
                 print("Please enter a valid message")
 
-if __name__ == '__main__':
+if _name_ == '_main_':
         asyncio.run(main())
