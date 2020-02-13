@@ -154,7 +154,7 @@ class ChargePoint(cp):
         print(response)
 
     async def send_clear_display_message(self,id):
-        request = call.ClearDisplayMessage(
+        request = call.ClearDisplayMessagePayload(
         	id=id
         )
         response = await self.call(request)
@@ -249,7 +249,7 @@ ssl_context.load_verify_locations("cert.pem")
 async def main():
     
     async with websockets.connect(
-        'wss://192.168.43.:9000/CP_1',
+        'wss://192.168.43.29:9000/CP_1',
          subprotocols=['ocpp2.0'],
          ssl=ssl_context
     ) as ws:
@@ -285,5 +285,5 @@ async def main():
         else:
                 print("Please enter a valid message")
 
-if _name_ == '_main_':
+if __name__ == '_main_':
         asyncio.run(main())
