@@ -85,6 +85,81 @@ class ChargePoint(cp):
                 # evse_id =
             )            
 
+    @on('ClearCache')
+    def clear_cache(self):
+        print('Clear Cache request set')
+        return call_result.ClearCachePayload(
+            status = 'Accepted'
+        )
+
+    @on('ClearChargingProfile')
+    def clear_charging_profile(self, evse_id, **kwargs):
+        return call_result.ClearChargingProfilePayload(
+            status = 'Accepted'
+        )
+
+    @on('ClearDispplayMessage')
+    def clear_display_message(self, id):
+        return call_result.ClearDisplayMessagePayload(
+            status = 'Accepted'
+        )
+
+    @on('ClearVariableMonitoring')
+    def clear_variable_monitor(self, id):
+        return call_result.ClearVariableMonitoringPayload(
+            id = id,
+            status = 'Accepted'
+        )
+
+    @on('CostUpdated')
+    def cost_updated(self, total_cost, transaction_id):
+        return call_result.CostUpdatedPayload(
+
+        )
+
+    @on('FirmwareStatusNotification')
+    def firmware_status_notification(self, status, request_id):
+        return call_result.FirmwareStatusNotificationPayload(
+
+        )
+
+    @on('GetChargingProfiles')
+    def get_charging_profiles(self, request_id, evse_id, clear_charging_profile):
+        return call_result.GetChargingProfilesPayload(
+            status = 'Accepted'
+        )
+
+    @on('GetCopmpositeSchedule')
+    def get_composite_schedule(self, duration, charging_rate_unit, evse_id):
+        return call_result.GetCompositeSchedulePayload(
+            status = 'Accepted',
+            schedule = None
+        )
+
+    @on('GetDisplayMessages')
+    def get_display_messages(self, id, request_id, priority, state):
+        return call_result.GetDisplayMessagesPayload(
+            status = 'Accepted'
+        )
+
+    @on('GetLocalListVersion')
+    def get_local_list_version(self):
+        return call_result.GetLocalListVersionPayload(
+            version_number = 123
+        )
+
+    @on('GetMonitoringReport')
+    def get_monitoring_report(self, request_id):
+        return call_result.GetMonitoringReportPayload(
+            status = 'Accepted'
+        )
+
+    @on('GetTransactionStatus')
+    def get_transaction_status(self, transaction_id):
+        return call_result.GetTransactionStatusPayload(
+            messages_in_queue = True
+        )
+
     @on('CancelReservation')
     def on_cancel_reservation(self, reservation_id):
         print('Reservation of '+ reservation_id + ' cancelled')
