@@ -247,12 +247,12 @@ ssl_context.load_verify_locations("cert.pem")
 
 
 async def main():
-    
+          
     async with websockets.connect(
-        'wss://192.168.43.29:9000/CP_1',
+        'wss://localhost:9000/CP_1',
          subprotocols=['ocpp2.0'],
          ssl=ssl_context
-    ) as ws:
+    ) as ws:        
         
         cp = ChargePoint('CP_1', ws)
         print("")
@@ -264,7 +264,9 @@ async def main():
                 print("Enter Vendor Name:")
                 vendorName = str(input())
                 print("Enter Reason:")
-                reason = str(input())                
+                reason = str(input())
+                # asyncio.ensure_future(cp.start())
+                # asyncio.ensure_future(cp.send_boot_notification(model,vendorName,reason))                
                 await asyncio.gather(cp.start(), cp.send_boot_notification(model,vendorName,reason), asyncio.ensure_future(main()))                
 
         elif message == 'Notify Event':
@@ -284,6 +286,9 @@ async def main():
                 await asyncio.gather(cp.start(),cp.send_transaction_event('Started', 'Authorized', 1234, 'Hello World'), asyncio.ensure_future(main())) 
         else:
                 print("Please enter a valid message")
+        
+        
 
-if __name__ == '__main__':
-        asyncio.run(main())
+if __name__ == '__main__':           
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main())

@@ -16,7 +16,7 @@ config = {
     "projectId": "charger-1eb48",
     "storageBucket": "charger-1eb48.appspot.com",
     "messagingSenderId": "430093083458",
-    "serviceAccount": "/home/raghav/SecureCharger/secure.json"
+    "serviceAccount": "/home/rushang99/Downloads/SecureCharger/secure.json"
 }
 
 
