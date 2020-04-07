@@ -246,8 +246,7 @@ ssl_context.load_verify_locations("cert.pem")
 
 
 
-async def main():
-          
+async def main():          
     async with websockets.connect(
         'wss://localhost:9000/CP_1',
          subprotocols=['ocpp2.0'],
@@ -287,6 +286,7 @@ async def main():
         else:
                 print("Please enter a valid message")
                 await asyncio.ensure_future(main())
+                
         
         
 
