@@ -286,6 +286,7 @@ async def main():
                 await asyncio.gather(cp.start(),cp.send_transaction_event('Started', 'Authorized', 1234, 'Hello World'), asyncio.ensure_future(main())) 
         else:
                 print("Please enter a valid message")
+                await asyncio.ensure_future(main())
         
         
 
