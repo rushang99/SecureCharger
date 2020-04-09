@@ -250,9 +250,9 @@ async def main():
     async with websockets.connect(
         'wss://localhost:9000/CP_1',
          subprotocols=['ocpp2.0'],
-         ssl=ssl_context
+         ssl=ssl_context,
+         ping_interval = 7
     ) as ws:        
-        
         cp = ChargePoint('CP_1', ws)
         print("")
         print("Please enter a message to send to the CSMS")

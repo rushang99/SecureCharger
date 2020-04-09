@@ -246,6 +246,9 @@ async def on_connect(websocket, path):
     cp = ChargePoint(charge_point_id, websocket)
     await cp.start()
 
+            
+    
+
 
 ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
 ssl_context.load_cert_chain("cert.pem")
@@ -255,7 +258,8 @@ async def main():
         '0.0.0.0',
         9000,
         subprotocols=['ocpp2.0'],
-        ssl=ssl_context        
+        ssl=ssl_context,
+        ping_timeout=100000000      
     )
 
     await server.wait_closed()
