@@ -8,6 +8,7 @@ from ocpp.v20 import call_result
 import pathlib
 import ssl
 import pyrebase
+import subprocess
 
 config = {
     "apiKey": "AIzaSyAGas29t240FwqdvXjdwzz4kITTN2Ix1ro",
@@ -28,6 +29,10 @@ user = auth.sign_in_with_email_and_password(email,password)
 db = firebase.database()
 
 cost='0'
+count=0
+userName=''
+modelName=''
+chassis=''
 
 
 class ChargePoint(cp):
@@ -35,6 +40,8 @@ class ChargePoint(cp):
     @on('BootNotification')
     def on_boot_notitication(self, charging_station, reason, **kwargs):
         print(charging_station['model'] + ' from ' + charging_station['vendor_name'] + ' has booted.')
+        global modelName
+        modelName=charging_station['model']
         return call_result.BootNotificationPayload(
             current_time = datetime.utcnow().isoformat(),
             interval = 10,
@@ -47,6 +54,9 @@ class ChargePoint(cp):
         flag=False
         all_users = db.child("Users").get()
         global cost
+        global userName
+        global modelName
+        global chassis
         for user in all_users.each():
             # print(user.key())
             # print(user.val()['name'])
@@ -55,9 +65,12 @@ class ChargePoint(cp):
                 break
         if flag:
             print(name + ' authorized successfully.')
-            # can add certificate _15118_certificate_hash_data
+
+            chassis=name
 
             cost=user.val()['chargingCost']
+            # user.val()['chargingCost']='0'
+            userName=name
             return call_result.AuthorizePayload(
                 id_token_info = {
                     'status' : 'Accepted',
@@ -74,6 +87,8 @@ class ChargePoint(cp):
             # can add certificate _15118_certificate_hash_data
             
             cost='0'
+            userName=''
+            modelName=''
             return call_result.AuthorizePayload(
                 id_token_info = {
                     'status' : 'Invalid',
@@ -202,6 +217,19 @@ class ChargePoint(cp):
     def transaction_event(self, event_type, timestamp, trigger_reason, seq_no, transaction_data, **kwargs):
         print('TransactionEvent')
         global cost
+        global count
+        global userName
+        global modelName
+        global chassis
+        # all_users = db.child("Users").get()
+        count=count+1
+
+        if cost!='0':
+            subprocess.call(["node","../../hypledger/fabric-samples/fabcar/javascript/invoke.js", "CAR"+str(count) , str(cost), modelName, str(timestamp), userName])
+            # for user in all_users.each():
+            #     if user.val()['username']==chassis:
+            #         user.val()['chargingCost']='0'                   
+            #         break
         return call_result.TransactionEventPayload(
             total_cost = int(cost),
             charging_priority = 2
@@ -245,9 +273,6 @@ async def on_connect(websocket, path):
     charge_point_id = path.strip('/')
     cp = ChargePoint(charge_point_id, websocket)
     await cp.start()
-
-            
-    
 
 
 ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
