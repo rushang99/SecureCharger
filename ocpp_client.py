@@ -6,8 +6,15 @@ from datetime import datetime
 from ocpp.v20 import call
 from ocpp.v20 import ChargePoint as cp
 import sys
+import pem
+import subprocess
+import time
 
-auth_flag = False
+auth_flag=False
+resp=[]
+puff_auth=False
+balance=0
+
 
 class ChargePoint(cp):
 
@@ -23,7 +30,7 @@ class ChargePoint(cp):
         
         if response.status == 'Accepted':
             print("Connected to central system.")
-            print(response)
+            print("Response-- "+str(response))
 
 
     async def send_authorize(self,idToken,typee):
@@ -36,11 +43,16 @@ class ChargePoint(cp):
                 # evse_id=None
         )
         response = await self.call(request)
+        global auth_flag
+        global balance
         if response.id_token_info['status'] == 'Accepted':
             auth_flag = True
+            balance=response.evse_id[0]
             print("Authorization Sucessful")
-            print(response)
+            # print(response)
         else:
+            auth_flag=False
+            balance=0
             print("Invalid Name/Id. Please try again!")
 
     async def send_cancel_reservation(self, reservId):
@@ -137,6 +149,141 @@ class ChargePoint(cp):
 
         print(response)
 
+    async def send_data_transfer(self,info,id):
+        request = call.DataTransferPayload(
+            data=info,
+            vendor_id=id
+        )
+
+        response = await self.call(request)
+        global puff_auth
+        if(response.status=='Rejected' and response.data!="Failed"):
+            challenge=response.data
+            print("Challenge recieved-- "+ str(challenge))
+            
+            import fcompact as fc
+            global resp
+            start_time = time.time()
+            resp=fc.compact(challenge)
+            time_elapsed=(time.time() - start_time)
+            resp.append(time_elapsed)
+            # print(str(response)+" "+str(time_elapsed))
+            print("Response Recorded")
+
+        elif response.status=="Accepted" and response.data=="Done":
+            
+            puff_auth=True
+            print("PUF Authorization Successful")
+
+        elif response.status=="Rejected" and response.data=="Failed":
+            
+            puff_auth=False
+            print("PUF Authorization Unsuccessful")
+
+        else:
+            print(response.data)
+
+
+    async def send_clear_cache(self):
+        request = call.ClearCachePayload(
+            
+        )
+        response = await self.call(request)
+
+        print(response)
+
+    async def send_clear_charging_profile(self,evseid):
+        request = call.ClearChargingProfilePayload(
+            evse_id=evseid
+        )
+        response = await self.call(request)
+
+        print(response)
+
+    async def send_clear_display_message(self,id):
+        request = call.ClearDisplayMessagePayload(
+            id=id
+        )
+        response = await self.call(request)
+
+        print(response)
+
+    async def send_clear_variable_monitoring(self,id):
+        request = call.ClearVariableMonitoringPayload(
+            id=id
+        )
+        response = await self.call(request)
+
+        print(response)
+
+    async def send_cost_updated(self,totalCost,transactionId):
+        request = call.CostUpdatedPayload(
+            total_cost=totalCost,
+            transaction_id=transactionId
+        )
+        response = await self.call(request)
+
+        print(response)
+
+    async def send_firmware_status_notification(self,status,requestid):
+        request = call.FirmwareStatusNotificationPayload(
+            request_id=requestid,
+            status=status
+        )
+        response = await self.call(request)
+
+        print(response)
+
+    async def send_get_charging_profiles(self,chargingProfile):
+        request = call.GetChargingProfilesPayload(
+            charging_profile=chargingProfile
+        )
+        response = await self.call(request)
+
+        print(response)
+
+    async def send_get_composite_schedule(self,evseid,duration):
+        request = call.GetCompositeSchedulePayload(
+            evse_id=evseid,
+            duration=duration
+        )
+        response = await self.call(request)
+
+        print(response)
+
+    async def send_get_display_messages(self,requestid):
+        request = call.GetDisplayMessagesPayload(
+            request_id=requestid
+        )
+        response = await self.call(request)
+
+        print(response)
+
+    async def send_get_local_list_version(self):
+        request = call.GetLocalListVersionPayload(
+            
+        )
+        response = await self.call(request)
+
+        print(response)
+
+    async def send_get_monitoring_report(self,requestid):
+        request = call.GetMonitoringReportPayload(
+            request_id=requestid
+        )
+        response = await self.call(request)
+
+        print(response)
+
+    async def send_get_transaction_status(self,transactionId):
+        request = call.GetTransactionStatusPayload(
+            transaction_id=transactionId
+        )
+        response = await self.call(request)
+
+        print(response)
+
+
 ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
 ssl_context.check_hostname = False
 ssl_context.verify_mode = ssl.CERT_NONE
@@ -146,14 +293,13 @@ ssl_context.load_verify_locations("cert.pem")
 
 
 
-async def main():
-    
+async def main():          
     async with websockets.connect(
-        'wss://192.168.43.29:9000/CP_1',
+        'wss://localhost:9000/CP_1',
          subprotocols=['ocpp2.0'],
-         ssl=ssl_context
-    ) as ws:
-        
+         ssl=ssl_context,
+         ping_interval = 7
+    ) as ws:        
         cp = ChargePoint('CP_1', ws)
         print("")
         print("Please enter a message to send to the CSMS")
@@ -164,7 +310,9 @@ async def main():
                 print("Enter Vendor Name:")
                 vendorName = str(input())
                 print("Enter Reason:")
-                reason = str(input())                
+                reason = str(input())
+                # asyncio.ensure_future(cp.start())
+                # asyncio.ensure_future(cp.send_boot_notification(model,vendorName,reason))                
                 await asyncio.gather(cp.start(), cp.send_boot_notification(model,vendorName,reason), asyncio.ensure_future(main()))                
 
         elif message == 'Notify Event':
@@ -180,10 +328,37 @@ async def main():
                 print("Enter Name/Id")
                 name = str(input())
                 await asyncio.gather(cp.start(), cp.send_authorize(name, 'Central'), asyncio.ensure_future(main())) 
-        elif message == "Transaction":
-                await asyncio.gather(cp.start(),cp.send_transaction_event('Started', 'Authorized', 1234, 'Hello World'), asyncio.ensure_future(main())) 
+        elif message == "Transaction Start":
+                global auth_flag
+                global puff_auth
+                if(auth_flag and puff_auth):
+                    global balance
+                    print("Enter Charging Amount")
+                    charge_req=str(input())
+                    if(int(charge_req) <= balance):
+                        await asyncio.gather(cp.start(),cp.send_transaction_event('Started', 'Authorized', int(charge_req), 'Hello World'), asyncio.ensure_future(main())) 
+                    else:
+                        print("Sufficient Balance not available. Please recharge")
+                        await asyncio.ensure_future(main())
+                else:
+                    print("Transaction is not authorized")
+                    await asyncio.ensure_future(main())
+        elif message == "Transaction End":
+                await asyncio.gather(cp.start(),cp.send_transaction_event('Ended', 'EVDeparted', 1234, 'Hello World'), asyncio.ensure_future(main())) 
+        elif message == "Data Transfer":
+                await asyncio.gather(cp.start(),cp.send_data_transfer("1234","Normal"), asyncio.ensure_future(main())) 
+        elif message == "Request Challenge":
+                await asyncio.gather(cp.start(),cp.send_data_transfer("Request Challenge","Challenge"), asyncio.ensure_future(main())) 
+        elif message == "Request Validation":
+                global resp
+                await asyncio.gather(cp.start(),cp.send_data_transfer(resp,"Challenge Sent"), asyncio.ensure_future(main())) 
         else:
                 print("Please enter a valid message")
+                await asyncio.ensure_future(main())
+                
+        
+        
 
-if __name__ == '__main__':
-        asyncio.run(main())
+if __name__ == '__main__':           
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main())
