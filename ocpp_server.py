@@ -9,13 +9,10 @@ import pathlib
 import ssl
 import pyrebase
 import subprocess
-<<<<<<< HEAD
 import pem
 import random
 import sys
 import time
-=======
->>>>>>> 9e696812c6fa8b5812cbcf6f216dbd352c659daf
 
 config = {
     "apiKey": "AIzaSyAGas29t240FwqdvXjdwzz4kITTN2Ix1ro",
@@ -24,7 +21,7 @@ config = {
     "projectId": "charger-1eb48",
     "storageBucket": "charger-1eb48.appspot.com",
     "messagingSenderId": "430093083458",
-    "serviceAccount": "/home/rushang99/Downloads/SecureCharger/secure.json"
+    "serviceAccount": "/home/raghav/SecureCharger/secure.json"
 }
 
 
@@ -39,13 +36,9 @@ cost='0'
 count=0
 userName=''
 modelName=''
-<<<<<<< HEAD
 challenge=[0,0,0,0,0,0,0,0,0,0,0,0]
 db_auth=False
 puf_auth=False
-=======
-chassis=''
->>>>>>> 9e696812c6fa8b5812cbcf6f216dbd352c659daf
 
 
 class ChargePoint(cp):
@@ -69,25 +62,15 @@ class ChargePoint(cp):
         global cost
         global userName
         global modelName
-<<<<<<< HEAD
         
         global db_auth
-=======
-        global chassis
->>>>>>> 9e696812c6fa8b5812cbcf6f216dbd352c659daf
         for user in all_users.each():
             if user.val()['username']==name:
                 flag=True
                 break
         if flag:
             print(name + ' authorized successfully.')
-<<<<<<< HEAD
             db_auth=True
-=======
-
-            chassis=name
-
->>>>>>> 9e696812c6fa8b5812cbcf6f216dbd352c659daf
             cost=user.val()['chargingCost']
             # user.val()['chargingCost']='0'
             userName=name
@@ -120,7 +103,6 @@ class ChargePoint(cp):
                 evse_id = [0]
             )            
 
-<<<<<<< HEAD
     @on('DataTransfer')
     def data_transfer(self,data,vendor_id,**kwargs):
         global challenge
@@ -177,8 +159,6 @@ class ChargePoint(cp):
 
             # print(str(response)+" "+str(time_elapsed))
 
-=======
->>>>>>> 9e696812c6fa8b5812cbcf6f216dbd352c659daf
     @on('ClearCache')
     def clear_cache(self):
         print('Clear Cache request set')
@@ -299,26 +279,15 @@ class ChargePoint(cp):
         global count
         global userName
         global modelName
-<<<<<<< HEAD
         charge_req=seq_no
         # all_users = db.child("Users").get()
         global puf_auth
         global db_auth
         if event_type=='Started' and puf_auth and db_auth:
-            # subprocess.call(["node","../fabric-samples/fabcar/javascript/invoke.js", "CAR"+str(count) , str(cost), modelName, str(timestamp), userName])
-=======
-        global chassis
-        # all_users = db.child("Users").get()
-        count=count+1
-
-        if cost!='0':
-            subprocess.call(["node","../../hypledger/fabric-samples/fabcar/javascript/invoke.js", "CAR"+str(count) , str(cost), modelName, str(timestamp), userName])
->>>>>>> 9e696812c6fa8b5812cbcf6f216dbd352c659daf
-            # for user in all_users.each():
-            #     if user.val()['username']==chassis:
-            #         user.val()['chargingCost']='0'                   
-            #         break
-<<<<<<< HEAD
+            if cost!='0':
+                count=count+1
+                certs = pem.parse_file('cert.pem')
+                subprocess.call(["node","../fabric-samples/fabcar/javascript/invoke.js", "CAR"+str(count) , str(cost), str(certs[1]), str(timestamp), userName])  
             return call_result.TransactionEventPayload(
                 total_cost = charge_req,
                 charging_priority = 2
@@ -346,12 +315,6 @@ class ChargePoint(cp):
                 total_cost = charge_req,
                 charging_priority = 2
             ) 
-=======
-        return call_result.TransactionEventPayload(
-            total_cost = int(cost),
-            charging_priority = 2
-        ) 
->>>>>>> 9e696812c6fa8b5812cbcf6f216dbd352c659daf
 
     @on('Reset')
     def reset(self, type, **kwargs):

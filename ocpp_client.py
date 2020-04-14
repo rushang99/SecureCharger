@@ -149,7 +149,6 @@ class ChargePoint(cp):
 
         print(response)
 
-<<<<<<< HEAD
     async def send_data_transfer(self,info,id):
         request = call.DataTransferPayload(
             data=info,
@@ -188,11 +187,6 @@ class ChargePoint(cp):
     async def send_clear_cache(self):
         request = call.ClearCachePayload(
             
-=======
-    async def send_clear_cache(self):
-        request = call.ClearCachePayload(
-        	
->>>>>>> 9e696812c6fa8b5812cbcf6f216dbd352c659daf
         )
         response = await self.call(request)
 
@@ -200,11 +194,7 @@ class ChargePoint(cp):
 
     async def send_clear_charging_profile(self,evseid):
         request = call.ClearChargingProfilePayload(
-<<<<<<< HEAD
             evse_id=evseid
-=======
-        	evse_id=evseid
->>>>>>> 9e696812c6fa8b5812cbcf6f216dbd352c659daf
         )
         response = await self.call(request)
 
@@ -212,11 +202,7 @@ class ChargePoint(cp):
 
     async def send_clear_display_message(self,id):
         request = call.ClearDisplayMessagePayload(
-<<<<<<< HEAD
             id=id
-=======
-        	id=id
->>>>>>> 9e696812c6fa8b5812cbcf6f216dbd352c659daf
         )
         response = await self.call(request)
 
@@ -224,11 +210,7 @@ class ChargePoint(cp):
 
     async def send_clear_variable_monitoring(self,id):
         request = call.ClearVariableMonitoringPayload(
-<<<<<<< HEAD
             id=id
-=======
-        	id=id
->>>>>>> 9e696812c6fa8b5812cbcf6f216dbd352c659daf
         )
         response = await self.call(request)
 
@@ -236,13 +218,8 @@ class ChargePoint(cp):
 
     async def send_cost_updated(self,totalCost,transactionId):
         request = call.CostUpdatedPayload(
-<<<<<<< HEAD
             total_cost=totalCost,
             transaction_id=transactionId
-=======
-        	total_cost=totalCost,
-        	transaction_id=transactionId
->>>>>>> 9e696812c6fa8b5812cbcf6f216dbd352c659daf
         )
         response = await self.call(request)
 
@@ -250,13 +227,8 @@ class ChargePoint(cp):
 
     async def send_firmware_status_notification(self,status,requestid):
         request = call.FirmwareStatusNotificationPayload(
-<<<<<<< HEAD
             request_id=requestid,
             status=status
-=======
-        	request_id=requestid,
-        	status=status
->>>>>>> 9e696812c6fa8b5812cbcf6f216dbd352c659daf
         )
         response = await self.call(request)
 
@@ -264,11 +236,7 @@ class ChargePoint(cp):
 
     async def send_get_charging_profiles(self,chargingProfile):
         request = call.GetChargingProfilesPayload(
-<<<<<<< HEAD
             charging_profile=chargingProfile
-=======
-        	charging_profile=chargingProfile
->>>>>>> 9e696812c6fa8b5812cbcf6f216dbd352c659daf
         )
         response = await self.call(request)
 
@@ -276,13 +244,8 @@ class ChargePoint(cp):
 
     async def send_get_composite_schedule(self,evseid,duration):
         request = call.GetCompositeSchedulePayload(
-<<<<<<< HEAD
             evse_id=evseid,
             duration=duration
-=======
-        	evse_id=evseid,
-        	duration=duration
->>>>>>> 9e696812c6fa8b5812cbcf6f216dbd352c659daf
         )
         response = await self.call(request)
 
@@ -290,11 +253,7 @@ class ChargePoint(cp):
 
     async def send_get_display_messages(self,requestid):
         request = call.GetDisplayMessagesPayload(
-<<<<<<< HEAD
             request_id=requestid
-=======
-        	request_id=requestid
->>>>>>> 9e696812c6fa8b5812cbcf6f216dbd352c659daf
         )
         response = await self.call(request)
 
@@ -302,11 +261,7 @@ class ChargePoint(cp):
 
     async def send_get_local_list_version(self):
         request = call.GetLocalListVersionPayload(
-<<<<<<< HEAD
             
-=======
-        	
->>>>>>> 9e696812c6fa8b5812cbcf6f216dbd352c659daf
         )
         response = await self.call(request)
 
@@ -314,11 +269,7 @@ class ChargePoint(cp):
 
     async def send_get_monitoring_report(self,requestid):
         request = call.GetMonitoringReportPayload(
-<<<<<<< HEAD
             request_id=requestid
-=======
-        	request_id=requestid
->>>>>>> 9e696812c6fa8b5812cbcf6f216dbd352c659daf
         )
         response = await self.call(request)
 
@@ -326,11 +277,7 @@ class ChargePoint(cp):
 
     async def send_get_transaction_status(self,transactionId):
         request = call.GetTransactionStatusPayload(
-<<<<<<< HEAD
             transaction_id=transactionId
-=======
-        	transaction_id=transactionId
->>>>>>> 9e696812c6fa8b5812cbcf6f216dbd352c659daf
         )
         response = await self.call(request)
 
