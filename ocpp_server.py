@@ -21,7 +21,7 @@ config = {
     "projectId": "charger-1eb48",
     "storageBucket": "charger-1eb48.appspot.com",
     "messagingSenderId": "430093083458",
-    "serviceAccount": "/home/raghav/SecureCharger/secure.json"
+    "serviceAccount": "/home/rushang99/Downloads/SecureCharger/secure.json"
 }
 
 
@@ -58,32 +58,48 @@ class ChargePoint(cp):
     def on_authorize(self, id_token, **kwargs):
         name=id_token['id_token']
         flag=False
+        db = firebase.database()
         all_users = db.child("Users").get()
+        print(all_users)
         global cost
         global userName
-        global modelName
-        
+        global modelName        
         global db_auth
         for user in all_users.each():
-            if user.val()['username']==name:
+            if user.key()==name:
                 flag=True
                 break
-        if flag:
-            print(name + ' authorized successfully.')
+        if flag:            
             db_auth=True
-            cost=user.val()['chargingCost']
-            # user.val()['chargingCost']='0'
-            userName=name
-            return call_result.AuthorizePayload(
-                id_token_info = {
-                    'status' : 'Accepted',
-                    # 'cacheExpiryDateTime'
-                    # 'ChargePriority'
-                    # 'language1'        
-                },
-                # certificate_status = 
-                evse_id = [int(cost)]
-            )
+            lockAcquired = user.val()['userLock']
+            if lockAcquired:
+                print("The user is already Authorized elsewhere. Please wait and try again later!!!")  
+                return call_result.AuthorizePayload(
+                    id_token_info = {
+                        'status' : 'NotAtThisLocation',
+                        # 'cacheExpiryDateTime'
+                        # 'ChargePriority'
+                        # 'language1'        
+                    },
+                    # certificate_status = 
+                    evse_id = [int(cost)]
+                )          
+            else:            
+                cost=user.val()['chargingCost']
+                print(name + ' authorized successfully.')
+                print(cost)
+                db.child("Users").child(name).update({"userLock" : True})
+                userName=name
+                return call_result.AuthorizePayload(
+                    id_token_info = {
+                        'status' : 'Accepted',
+                        # 'cacheExpiryDateTime'
+                        # 'ChargePriority'
+                        # 'language1'        
+                    },
+                    # certificate_status = 
+                    evse_id = [int(cost)]
+                )
 
         else:
             print(name + ' authorized unsuccessfully.')
@@ -279,15 +295,17 @@ class ChargePoint(cp):
         global count
         global userName
         global modelName
+        global charge_requested
         charge_req=seq_no
-        # all_users = db.child("Users").get()
+        all_users = db.child("Users").get()
         global puf_auth
         global db_auth
         if event_type=='Started' and puf_auth and db_auth:
             if cost!='0':
                 count=count+1
                 certs = pem.parse_file('cert.pem')
-                subprocess.call(["node","../fabric-samples/fabcar/javascript/invoke.js", "CAR"+str(count) , str(cost), str(certs[1]), str(timestamp), userName])  
+                subprocess.call(["node","../fabric-samples/fabcar/javascript/invoke.js", "CAR"+str(count) , str(cost), str(certs[1]), str(timestamp), userName]) 
+                charge_requested = charge_req 
             return call_result.TransactionEventPayload(
                 total_cost = charge_req,
                 charging_priority = 2
@@ -302,13 +320,23 @@ class ChargePoint(cp):
             if cost!='0':
                 count=count+1
                 certs = pem.parse_file('cert.pem')
-                subprocess.call(["node","../fabric-samples/fabcar/javascript/invoke.js", "CAR"+str(count) , str(cost), str(certs[1]), str(timestamp), userName])  
-
+                subprocess.call(["node","../fabric-samples/fabcar/javascript/invoke.js", "CAR"+str(count) , str(charge_requested), str(certs[1]), str(timestamp), userName])  
+                print('done')
+            
+            for user in all_users.each():
+                if user.key() == userName:
+                    break
+    
+            initialCost = user.val()['chargingCost']
+            print(initialCost)
+            db.child("Users").child(userName).set({"chargingCost":str(int(initialCost) - charge_requested), "userLock" : False})
+            
             cost='0'
             count=0
             userName=''
             modelName=''
             challenge=[0,0,0,0,0,0,0,0,0,0,0,0]
+            
             db_auth=False
             puf_auth=False
             return call_result.TransactionEventPayload(
