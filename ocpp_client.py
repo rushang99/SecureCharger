@@ -9,7 +9,7 @@ import sys
 import pem
 import subprocess
 import time
-
+import json
 auth_flag=False
 resp=[]
 puff_auth=False
@@ -288,11 +288,7 @@ ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
 ssl_context.check_hostname = False
 ssl_context.verify_mode = ssl.CERT_NONE
 ssl_context.load_verify_locations("cert.pem")
-
-
-
-
-
+                
 async def main():          
     async with websockets.connect(
         'wss://localhost:9000/CP_1',
@@ -301,16 +297,21 @@ async def main():
          ping_interval = 7
     ) as ws:        
         cp = ChargePoint('CP_1', ws)
+        f=open("car.json",'r')
+        data=json.load(f)
         print("")
         print("Please enter a message to send to the CSMS")
         message = str(input())
         if message == 'Boot Notification':
-                print("Enter Model:")
-                model  = str(input())
-                print("Enter Vendor Name:")
-                vendorName = str(input())
-                print("Enter Reason:")
-                reason = str(input())
+                # print("Enter Model:")
+                # model  = str(input())
+                # print("Enter Vendor Name:")
+                # vendorName = str(input())
+                # print("Enter Reason:")
+                # reason = str(input())
+                model=data["Model"]
+                vendorName=data["Vendor"]
+                reason='PowerUp'
                 # asyncio.ensure_future(cp.start())
                 # asyncio.ensure_future(cp.send_boot_notification(model,vendorName,reason))                
                 await asyncio.gather(cp.start(), cp.send_boot_notification(model,vendorName,reason), asyncio.ensure_future(main()))                
@@ -325,16 +326,17 @@ async def main():
                 print(reportId)
                 await asyncio.gather(cp.start(), cp.send_get_report(reportId), asyncio.ensure_future(main()))
         elif message == "Authorize":
-                print("Enter Name/Id")
-                name = str(input())
+                # print("Enter Name/Id")
+                # name = str(input())
+                name=data["Id"]
                 await asyncio.gather(cp.start(), cp.send_authorize(name, 'Central'), asyncio.ensure_future(main())) 
         elif message == "Transaction Start":
                 global auth_flag
                 global puff_auth
                 if(auth_flag and puff_auth):
                     global balance
-                    print("Enter Charging Amount")
-                    charge_req=str(input())
+                    # print("Enter Charging Amount")
+                    charge_req=data["Amount"]
                     if(int(charge_req) <= balance):
                         await asyncio.gather(cp.start(),cp.send_transaction_event('Started', 'Authorized', int(charge_req), 'Hello World'), asyncio.ensure_future(main())) 
                     else:
@@ -354,9 +356,7 @@ async def main():
                 await asyncio.gather(cp.start(),cp.send_data_transfer(resp,"Challenge Sent"), asyncio.ensure_future(main())) 
         else:
                 print("Please enter a valid message")
-                await asyncio.ensure_future(main())
-                
-        
+                await asyncio.ensure_future(main())       
         
 
 if __name__ == '__main__':           

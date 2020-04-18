@@ -21,7 +21,7 @@ config = {
     "projectId": "charger-1eb48",
     "storageBucket": "charger-1eb48.appspot.com",
     "messagingSenderId": "430093083458",
-    "serviceAccount": "/home/rushang99/Downloads/SecureCharger/secure.json"
+    "serviceAccount": "/home/raghav/SecureCharger/secure.json"
 }
 
 
@@ -302,9 +302,9 @@ class ChargePoint(cp):
         global db_auth
         if event_type=='Started' and puf_auth and db_auth:
             if cost!='0':
-                count=count+1
-                certs = pem.parse_file('cert.pem')
-                subprocess.call(["node","../fabric-samples/fabcar/javascript/invoke.js", "CAR"+str(count) , str(cost), str(certs[1]), str(timestamp), userName]) 
+                # count=count+1
+                # certs = pem.parse_file('cert.pem')
+                # subprocess.call(["node","../fabric-samples/fabcar/javascript/invoke.js", "CAR"+str(count) , str(cost), str(certs[1]), str(timestamp), userName]) 
                 charge_requested = charge_req 
             return call_result.TransactionEventPayload(
                 total_cost = charge_req,
@@ -320,7 +320,7 @@ class ChargePoint(cp):
             if cost!='0':
                 count=count+1
                 certs = pem.parse_file('cert.pem')
-                subprocess.call(["node","../fabric-samples/fabcar/javascript/invoke.js", "CAR"+str(count) , str(charge_requested), str(certs[1]), str(timestamp), userName])  
+                # subprocess.call(["node","../fabric-samples/fabcar/javascript/invoke.js", "CAR"+str(count) , str(charge_requested), str(certs[1]), str(timestamp), userName])  
                 print('done')
             
             for user in all_users.each():
@@ -340,7 +340,7 @@ class ChargePoint(cp):
             db_auth=False
             puf_auth=False
             return call_result.TransactionEventPayload(
-                total_cost = charge_req,
+                total_cost = charge_requested,
                 charging_priority = 2
             ) 
 
