@@ -303,8 +303,9 @@ async def main():
         vendorName = data["Vendor"]
         reason = 'PowerUp'
         name = data["Id"]
+        global resp
         charge_req = data["Amount"]
-        await asyncio.gather(cp.start(), cp.send_boot_notification(model,vendorName,reason), cp.send_authorize(name, 'Central'), cp.send_data_transfer("Request Challenge","Challenge"), cp.send_data_transfer(resp,"Challenge Sent"), cp.send_transaction_event('Started', 'Authorized', int(charge_req), 'Hello World'), cp.send_transaction_event('Ended', 'EVDeparted', 1234, 'Hello World'))
+        await asyncio.gather(cp.start(), cp.send_boot_notification(model,vendorName,reason), cp.send_authorize(name, 'Central'), cp.send_data_transfer("Request Challenge","Challenge"), cp.send_data_transfer(resp,"ChallengeSent"), cp.send_transaction_event('Started', 'Authorized', int(charge_req), 'Hello World'), cp.send_transaction_event('Ended', 'EVDeparted', 1234, 'Hello World'))
         # print("")
         # print("Please enter a message to send to the CSMS")
         # message = str(input())

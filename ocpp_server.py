@@ -137,7 +137,7 @@ class ChargePoint(cp):
                 status = 'Rejected',
                 data=challenge
             )
-        elif(str(vendor_id)=="Challenge Sent"):
+        elif(str(vendor_id)=="ChallengeSent"):
             
             #Request model from database and validate user
             import fexpand as fe
