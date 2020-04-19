@@ -297,66 +297,70 @@ async def main():
          ping_interval = 7
     ) as ws:        
         cp = ChargePoint('CP_1', ws)
-        f=open("car.json",'r')
-        data=json.load(f)
-        print("")
-        print("Please enter a message to send to the CSMS")
-        message = str(input())
-        if message == 'Boot Notification':
+        f = open("car.json",'r')
+        data = json.load(f)        
+        model = data["Model"]
+        vendorName = data["Vendor"]
+        reason = 'PowerUp'
+        name = data["Id"]
+        charge_req = data["Amount"]
+        await asyncio.gather(cp.start(), cp.send_boot_notification(model,vendorName,reason), cp.send_authorize(name, 'Central'), cp.send_data_transfer("Request Challenge","Challenge"), cp.send_data_transfer(resp,"Challenge Sent"), cp.send_transaction_event('Started', 'Authorized', int(charge_req), 'Hello World'), cp.send_transaction_event('Ended', 'EVDeparted', 1234, 'Hello World'))
+        # print("")
+        # print("Please enter a message to send to the CSMS")
+        # message = str(input())
+        # if message == 'Boot Notification':
                 # print("Enter Model:")
                 # model  = str(input())
                 # print("Enter Vendor Name:")
                 # vendorName = str(input())
                 # print("Enter Reason:")
                 # reason = str(input())
-                model=data["Model"]
-                vendorName=data["Vendor"]
-                reason='PowerUp'
+                
                 # asyncio.ensure_future(cp.start())
                 # asyncio.ensure_future(cp.send_boot_notification(model,vendorName,reason))                
-                await asyncio.gather(cp.start(), cp.send_boot_notification(model,vendorName,reason), asyncio.ensure_future(main()))                
+        #         await asyncio.gather(cp.start(), cp.send_boot_notification(model,vendorName,reason), asyncio.ensure_future(main()))                
 
-        elif message == 'Notify Event':
-                print
-                await asyncio.gather(cp.start(), cp.send_notify_event(False,0,'Alerting','actualValue',True,'HardWiredNotification','comp','var'), asyncio.ensure_future(main()))
+        # elif message == 'Notify Event':
+        #         print
+        #         await asyncio.gather(cp.start(), cp.send_notify_event(False,0,'Alerting','actualValue',True,'HardWiredNotification','comp','var'), asyncio.ensure_future(main()))
 
-        elif message == "Get Report":
-                print("Enter Report Id")
-                reportId = int(input())
-                print(reportId)
-                await asyncio.gather(cp.start(), cp.send_get_report(reportId), asyncio.ensure_future(main()))
-        elif message == "Authorize":
-                # print("Enter Name/Id")
-                # name = str(input())
-                name=data["Id"]
-                await asyncio.gather(cp.start(), cp.send_authorize(name, 'Central'), asyncio.ensure_future(main())) 
-        elif message == "Transaction Start":
-                global auth_flag
-                global puff_auth
-                if(auth_flag and puff_auth):
-                    global balance
-                    # print("Enter Charging Amount")
-                    charge_req=data["Amount"]
-                    if(int(charge_req) <= balance):
-                        await asyncio.gather(cp.start(),cp.send_transaction_event('Started', 'Authorized', int(charge_req), 'Hello World'), asyncio.ensure_future(main())) 
-                    else:
-                        print("Sufficient Balance not available. Please recharge")
-                        await asyncio.ensure_future(main())
-                else:
-                    print("Transaction is not authorized")
-                    await asyncio.ensure_future(main())
-        elif message == "Transaction End":
-                await asyncio.gather(cp.start(),cp.send_transaction_event('Ended', 'EVDeparted', 1234, 'Hello World'), asyncio.ensure_future(main())) 
-        elif message == "Data Transfer":
-                await asyncio.gather(cp.start(),cp.send_data_transfer("1234","Normal"), asyncio.ensure_future(main())) 
-        elif message == "Request Challenge":
-                await asyncio.gather(cp.start(),cp.send_data_transfer("Request Challenge","Challenge"), asyncio.ensure_future(main())) 
-        elif message == "Request Validation":
-                global resp
-                await asyncio.gather(cp.start(),cp.send_data_transfer(resp,"Challenge Sent"), asyncio.ensure_future(main())) 
-        else:
-                print("Please enter a valid message")
-                await asyncio.ensure_future(main())       
+        # elif message == "Get Report":
+        #         print("Enter Report Id")
+        #         reportId = int(input())
+        #         print(reportId)
+        #         await asyncio.gather(cp.start(), cp.send_get_report(reportId), asyncio.ensure_future(main()))
+        # elif message == "Authorize":
+        #         # print("Enter Name/Id")
+        #         # name = str(input())
+        #         name=data["Id"]
+        #         await asyncio.gather(cp.start(), cp.send_authorize(name, 'Central'), asyncio.ensure_future(main())) 
+        # elif message == "Transaction Start":
+        #         global auth_flag
+        #         global puff_auth
+        #         if(auth_flag and puff_auth):
+        #             global balance
+        #             # print("Enter Charging Amount")
+        #             charge_req=data["Amount"]
+        #             if(int(charge_req) <= balance):
+        #                 await asyncio.gather(cp.start(),cp.send_transaction_event('Started', 'Authorized', int(charge_req), 'Hello World'), asyncio.ensure_future(main())) 
+        #             else:
+        #                 print("Sufficient Balance not available. Please recharge")
+        #                 await asyncio.ensure_future(main())
+        #         else:
+        #             print("Transaction is not authorized")
+        #             await asyncio.ensure_future(main())
+        # elif message == "Transaction End":
+        #         await asyncio.gather(cp.start(),cp.send_transaction_event('Ended', 'EVDeparted', 1234, 'Hello World'), asyncio.ensure_future(main())) 
+        # elif message == "Data Transfer":
+        #         await asyncio.gather(cp.start(),cp.send_data_transfer("1234","Normal"), asyncio.ensure_future(main())) 
+        # elif message == "Request Challenge":
+        #         await asyncio.gather(cp.start(),cp.send_data_transfer("Request Challenge","Challenge"), asyncio.ensure_future(main())) 
+        # elif message == "Request Validation":
+        #         global resp
+        #         await asyncio.gather(cp.start(),cp.send_data_transfer(resp,"Challenge Sent"), asyncio.ensure_future(main())) 
+        # else:
+        #         print("Please enter a valid message")
+        #         await asyncio.ensure_future(main())       
         
 
 if __name__ == '__main__':           

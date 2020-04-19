@@ -21,7 +21,8 @@ config = {
     "projectId": "charger-1eb48",
     "storageBucket": "charger-1eb48.appspot.com",
     "messagingSenderId": "430093083458",
-    "serviceAccount": "/home/raghav/SecureCharger/secure.json"
+    # "serviceAccount": "/home/raghav/SecureCharger/secure.json"
+    "serviceAccount": "/home/rushang99/Downloads/SecureCharger/secure.json"
 }
 
 
@@ -335,7 +336,7 @@ class ChargePoint(cp):
             count=0
             userName=''
             modelName=''
-            challenge=[0,0,0,0,0,0,0,0,0,0,0,0]
+            challenge = [0,0,0,0,0,0,0,0,0,0,0,0]
             
             db_auth=False
             puf_auth=False
