@@ -14,11 +14,14 @@ auth_flag=False
 resp=[]
 puff_auth=False
 balance=0
+message_id = 0
+prev_msg_done = True
 
 
 class ChargePoint(cp):
 
     async def send_boot_notification(self,model,vendorName,reason):
+        global prev_msg_done
         request = call.BootNotificationPayload(
                 charging_station={
                     'model': model,
@@ -29,11 +32,13 @@ class ChargePoint(cp):
         response = await self.call(request)
         
         if response.status == 'Accepted':
+            prev_msg_done = True
             print("Connected to central system.")
             print("Response-- "+str(response))
 
 
     async def send_authorize(self,idToken,typee):
+        global prev_msg_done
         request = call.AuthorizePayload(
                 id_token={
                     'idToken': idToken,
@@ -48,6 +53,7 @@ class ChargePoint(cp):
         if response.id_token_info['status'] == 'Accepted':
             auth_flag = True
             balance=response.evse_id[0]
+            prev_msg_done = True
             print("Authorization Sucessful")
             # print(response)
         else:
@@ -163,20 +169,27 @@ class ChargePoint(cp):
             
             import fcompact as fc
             global resp
+            global prev_msg_done
             start_time = time.time()
             resp=fc.compact(challenge)
             time_elapsed=(time.time() - start_time)
             resp.append(time_elapsed)
-            # print(str(response)+" "+str(time_elapsed))
+            print(resp)
+            # global verify
+            # verify = True
+            # global flag
+            # flag = True  
+                      
+            print(str(response)+" "+str(time_elapsed))
+            prev_msg_done = True
             print("Response Recorded")
 
-        elif response.status=="Accepted" and response.data=="Done":
-            
+        elif response.status=="Accepted" and response.data=="Done":            
             puff_auth=True
+            prev_msg_done = True
             print("PUF Authorization Successful")
 
-        elif response.status=="Rejected" and response.data=="Failed":
-            
+        elif response.status=="Rejected" and response.data=="Failed":            
             puff_auth=False
             print("PUF Authorization Unsuccessful")
 
@@ -303,12 +316,56 @@ async def main():
         vendorName = data["Vendor"]
         reason = 'PowerUp'
         name = data["Id"]
+        charge_req=data["Amount"]
         global resp
-        charge_req = data["Amount"]
-        await asyncio.gather(cp.start(), cp.send_boot_notification(model,vendorName,reason), cp.send_authorize(name, 'Central'), cp.send_data_transfer("Request Challenge","Challenge"), cp.send_data_transfer(resp,"ChallengeSent"), cp.send_transaction_event('Started', 'Authorized', int(charge_req), 'Hello World'), cp.send_transaction_event('Ended', 'EVDeparted', 1234, 'Hello World'))
+        global message_id
+        global prev_msg_done
+        # charge_req = data["Amount"]
+        # if (verify == False and flag == False):
+        #     await asyncio.gather(cp.start(), cp.send_boot_notification(model,vendorName,reason), cp.send_authorize(name, 'Central'), cp.send_data_transfer("Request Challenge","Challenge"), asyncio.ensure_future(main()))
+        # elif (verify == True):
+        #     await asyncio.gather(cp.start(), cp.send_data_transfer(resp,"Challenge Sent"), cp.send_transaction_event('Started', 'Authorized', int(charge_req), 'Hello World'), cp.send_transaction_event('Ended', 'EVDeparted', 1234, 'Hello World'))
+        # else:
+        #     await asyncio.gather(asyncio.ensure_future(main()))
         # print("")
         # print("Please enter a message to send to the CSMS")
         # message = str(input())
+        if message_id == 0 and prev_msg_done == True: 
+            message_id = 1
+            prev_msg_done = False              
+            await asyncio.gather(cp.start(), cp.send_boot_notification(model,vendorName,reason), asyncio.ensure_future(main()))              
+
+        elif message_id == 1 and prev_msg_done == True:
+            message_id = 2
+            prev_msg_done = False
+            await asyncio.gather(cp.start(), cp.send_authorize(name, 'Central'), asyncio.ensure_future(main())) 
+
+        elif message_id == 2 and prev_msg_done == True:
+            message_id = 3
+            prev_msg_done = False
+            await asyncio.gather(cp.start(),cp.send_data_transfer("Request Challenge","Challenge"), asyncio.ensure_future(main()))
+
+        elif message_id == 3 and prev_msg_done == True:
+            message_id = 4
+            prev_msg_done = False
+            await asyncio.gather(cp.start(),cp.send_data_transfer(resp,"Challenge Sent"))
+        
+        elif message_id == 4 and prev_msg_done == True:
+                global auth_flag
+                global puff_auth
+                if(auth_flag and puff_auth):
+                    global balance
+                    if(int(charge_req) <= balance):
+                        await asyncio.gather(cp.start(),cp.send_transaction_event('Started', 'Authorized', int(charge_req), 'Hello World'), asyncio.ensure_future(main())) 
+                    else:
+                        print("Sufficient Balance not available. Please recharge")
+                        await asyncio.ensure_future(main())
+                else:
+                    print("Transaction is not authorized")
+                    await asyncio.ensure_future(main())
+        elif message == "Transaction End":
+                await asyncio.gather(cp.start(),cp.send_transaction_event('Ended', 'EVDeparted', 1234, 'Hello World'), asyncio.ensure_future(main())) 
+        #########################################################################################################################
         # if message == 'Boot Notification':
                 # print("Enter Model:")
                 # model  = str(input())
@@ -364,6 +421,6 @@ async def main():
         #         await asyncio.ensure_future(main())       
         
 
-if __name__ == '__main__':           
+if __name__ == '__main__':         
     loop = asyncio.get_event_loop()
     loop.run_until_complete(main())

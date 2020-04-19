@@ -137,13 +137,14 @@ class ChargePoint(cp):
                 status = 'Rejected',
                 data=challenge
             )
-        elif(str(vendor_id)=="ChallengeSent"):
+        elif(str(vendor_id)=="Challenge Sent"):
             
             #Request model from database and validate user
             import fexpand as fe
             start_time = time.time()
             response_expand=fe.expand(challenge)
             time_expand=(time.time() - start_time)
+            print(data)
             response_compact=data[:4]
             time_compact=data[4]
 
