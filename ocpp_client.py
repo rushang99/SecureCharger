@@ -360,6 +360,7 @@ async def main():
 
         elif message_id == 5 and prev_msg_done == True:
             message_id = 6
+            time.sleep(10)
             await asyncio.gather(cp.start(),cp.send_transaction_event('Ended', 'EVDeparted', 1234, 'Hello World'))
 
         else:
