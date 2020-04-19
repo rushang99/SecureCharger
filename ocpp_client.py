@@ -101,6 +101,7 @@ class ChargePoint(cp):
             print(response) 
 
     async def send_transaction_event(self,eventType,triggerReason,seqNo,id):
+        global prev_msg_done
         request = call.TransactionEventPayload(
                 event_type=eventType,
                 timestamp=datetime.utcnow().isoformat(),
@@ -108,6 +109,7 @@ class ChargePoint(cp):
                 seq_no=seqNo,
                 transaction_data={'id': id}
         )
+        prev_msg_done = True
         response = await self.call(request)
         print(response)
         print(response.total_cost)
@@ -320,16 +322,6 @@ async def main():
         global resp
         global message_id
         global prev_msg_done
-        # charge_req = data["Amount"]
-        # if (verify == False and flag == False):
-        #     await asyncio.gather(cp.start(), cp.send_boot_notification(model,vendorName,reason), cp.send_authorize(name, 'Central'), cp.send_data_transfer("Request Challenge","Challenge"), asyncio.ensure_future(main()))
-        # elif (verify == True):
-        #     await asyncio.gather(cp.start(), cp.send_data_transfer(resp,"Challenge Sent"), cp.send_transaction_event('Started', 'Authorized', int(charge_req), 'Hello World'), cp.send_transaction_event('Ended', 'EVDeparted', 1234, 'Hello World'))
-        # else:
-        #     await asyncio.gather(asyncio.ensure_future(main()))
-        # print("")
-        # print("Please enter a message to send to the CSMS")
-        # message = str(input())
         if message_id == 0 and prev_msg_done == True: 
             message_id = 1
             prev_msg_done = False              
@@ -348,24 +340,31 @@ async def main():
         elif message_id == 3 and prev_msg_done == True:
             message_id = 4
             prev_msg_done = False
-            await asyncio.gather(cp.start(),cp.send_data_transfer(resp,"Challenge Sent"))
+            await asyncio.gather(cp.start(),cp.send_data_transfer(resp,"Challenge Sent"), asyncio.ensure_future(main()))
         
         elif message_id == 4 and prev_msg_done == True:
-                global auth_flag
-                global puff_auth
-                if(auth_flag and puff_auth):
-                    global balance
-                    if(int(charge_req) <= balance):
-                        await asyncio.gather(cp.start(),cp.send_transaction_event('Started', 'Authorized', int(charge_req), 'Hello World'), asyncio.ensure_future(main())) 
-                    else:
-                        print("Sufficient Balance not available. Please recharge")
-                        await asyncio.ensure_future(main())
+            global auth_flag
+            global puff_auth
+            message_id = 5
+            prev_msg_done = False
+            if(auth_flag and puff_auth):
+                global balance
+                if(int(charge_req) <= balance):
+                    await asyncio.gather(cp.start(),cp.send_transaction_event('Started', 'Authorized', int(charge_req), 'Hello World'), asyncio.ensure_future(main())) 
                 else:
-                    print("Transaction is not authorized")
+                    print("Sufficient Balance not available. Please recharge")
                     await asyncio.ensure_future(main())
-        elif message == "Transaction End":
-                await asyncio.gather(cp.start(),cp.send_transaction_event('Ended', 'EVDeparted', 1234, 'Hello World'), asyncio.ensure_future(main())) 
-        #########################################################################################################################
+            else:
+                print("Transaction is not authorized")
+                await asyncio.ensure_future(main())
+
+        elif message_id == 5 and prev_msg_done == True:
+            message_id = 6
+            await asyncio.gather(cp.start(),cp.send_transaction_event('Ended', 'EVDeparted', 1234, 'Hello World'))
+
+        else:
+            await asyncio.ensure_future(main())
+
         # if message == 'Boot Notification':
                 # print("Enter Model:")
                 # model  = str(input())
