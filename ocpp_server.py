@@ -319,6 +319,7 @@ class ChargePoint(cp):
             ) 
 
         elif event_type=='Ended':
+            db = firebase.database()
             if cost!='0':
                 count=count+1
                 certs = pem.parse_file('cert.pem')
@@ -331,7 +332,8 @@ class ChargePoint(cp):
     
             initialCost = user.val()['chargingCost']
             print(initialCost)
-            db.child("Users").child(userName).set({"chargingCost":str(int(initialCost) - charge_requested), "userLock" : False})
+            
+            db.child("Users").child(userName).set({"chargingCost":str(int(initialCost) - charge_requested), "userLock" : False})            
             
             cost='0'
             count=0
