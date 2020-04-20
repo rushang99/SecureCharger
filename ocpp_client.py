@@ -173,15 +173,11 @@ class ChargePoint(cp):
             global resp
             global prev_msg_done
             start_time = time.time()
+            print(challenge)
             resp=fc.compact(challenge)
             time_elapsed=(time.time() - start_time)
             resp.append(time_elapsed)
-            print(resp)
-            # global verify
-            # verify = True
-            # global flag
-            # flag = True  
-                      
+            print(resp)                     
             print(str(response)+" "+str(time_elapsed))
             prev_msg_done = True
             print("Response Recorded")
@@ -279,7 +275,6 @@ class ChargePoint(cp):
             
         )
         response = await self.call(request)
-
         print(response)
 
     async def send_get_monitoring_report(self,requestid):
@@ -287,7 +282,6 @@ class ChargePoint(cp):
             request_id=requestid
         )
         response = await self.call(request)
-
         print(response)
 
     async def send_get_transaction_status(self,transactionId):
@@ -295,7 +289,6 @@ class ChargePoint(cp):
             transaction_id=transactionId
         )
         response = await self.call(request)
-
         print(response)
 
 
@@ -360,7 +353,7 @@ async def main():
 
         elif message_id == 5 and prev_msg_done == True:
             message_id = 6
-            time.sleep(10)
+            # time.sleep(10)
             await asyncio.gather(cp.start(),cp.send_transaction_event('Ended', 'EVDeparted', 1234, 'Hello World'))
 
         else:
