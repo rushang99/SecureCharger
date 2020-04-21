@@ -101,6 +101,7 @@ class ChargePoint(cp):
                 print(self.cost)
                 db.child("Users").child(name).update({"userLock" : True})
                 self.userName=name
+                print(self.userName)
                 return call_result.AuthorizePayload(
                     id_token_info = {
                         'status' : 'Accepted',
@@ -151,7 +152,6 @@ class ChargePoint(cp):
             #Request model from database and validate user
             import fexpand as fe
             start_time = time.time()
-            print(self.challenge)
             response_expand=fe.expand(self.challenge)
             time_expand=(time.time() - start_time)
             print(data)
@@ -344,7 +344,7 @@ class ChargePoint(cp):
     
             initialCost = user.val()['chargingCost']
             print(initialCost)
-            
+            print(self.userName)
             db.child("Users").child(self.userName).set({"chargingCost":str(int(initialCost) - self.charge_requested), "userLock" : False})            
             
             # self.cost='0'
