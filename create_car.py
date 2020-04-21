@@ -22,26 +22,26 @@ password = "12345678"
 user = auth.sign_in_with_email_and_password(email,password)
 db = firebase.database()
 
+for i in range(0, 10):
+    amount  = random.randint(100, 500)
+    letters = string.ascii_letters
+    Model = ''.join(random.choice(letters) for i in range(random.randint(1,9)))
+    Vendor = ''.join(random.choice(letters) for i in range(random.randint(1,9)))
+    Id = ''.join(random.choice(letters) for i in range(random.randint(1,9)))
+    db.child("Users").child(Id).set({"chargingCost":str(amount*random.randint(2, 10)), "userLock" : False}) 
 
-amount  = random.randint(100, 500)
-letters = string.ascii_letters
-Model = ''.join(random.choice(letters) for i in range(random.randint(1,9)))
-Vendor = ''.join(random.choice(letters) for i in range(random.randint(1,9)))
-Id = ''.join(random.choice(letters) for i in range(random.randint(1,9)))
-db.child("Users").child(Id).set({"chargingCost":str(amount), "userLock" : False}) 
-
-# Data to be written
-dictionary ={ 
-    "Model":Model,
-	"Vendor":Vendor,
-	"Id":Id,
-	"Amount":str(amount),
-	"Cert":""
-} 
-  
-# Serializing json  
-json_object = json.dumps(dictionary, indent = 4) 
-  
-# Writing to sample.json 
-with open("sample.json", "w") as outfile: 
-    outfile.write(json_object) 
+    # Data to be written
+    dictionary ={ 
+        "Model":Model,
+        "Vendor":Vendor,
+        "Id":Id,
+        "Amount":str(amount),
+        "Cert":""
+    } 
+    
+    # Serializing json  
+    json_object = json.dumps(dictionary, indent = 4) 
+    
+    # Writing to sample.json 
+    with open("car" + str(i)+".json", "w") as outfile: 
+        outfile.write(json_object) 
