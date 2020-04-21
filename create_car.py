@@ -43,5 +43,5 @@ for i in range(0, 10):
     json_object = json.dumps(dictionary, indent = 4) 
     
     # Writing to sample.json 
-    with open("car" + str(i)+".json", "w") as outfile: 
+    with open("cars/car" + str(i)+".json", "w") as outfile: 
         outfile.write(json_object) 
