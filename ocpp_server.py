@@ -21,8 +21,8 @@ config = {
     "projectId": "charger-1eb48",
     "storageBucket": "charger-1eb48.appspot.com",
     "messagingSenderId": "430093083458",
-    # "serviceAccount": "/home/raghav/SecureCharger/secure.json"
-    "serviceAccount": "/home/rushang99/Downloads/SecureCharger/secure.json"
+    "serviceAccount": "/home/raghav/SecureCharger/secure.json"
+    # "serviceAccount": "/home/rushang99/Downloads/SecureCharger/secure.json"
 }
 
 
@@ -33,14 +33,7 @@ password = "12345678"
 user = auth.sign_in_with_email_and_password(email,password)
 db = firebase.database()
 
-# cost='0'
-# count=0
-# userName=''
-# modelName=''
-# challenge=[0,0,0,0,0,0,0,0,0,0,0,0]
-# db_auth=False
-# puf_auth=False
-
+count=0
 
 class ChargePoint(cp):
     cost='0'
@@ -50,12 +43,12 @@ class ChargePoint(cp):
     challenge=[0,0,0,0,0,0,0,0,0,0,0,0]
     db_auth=False
     puf_auth=False
+    start_transaction=False
     charge_requested = 0
 
     @on('BootNotification')
     def on_boot_notitication(self, charging_station, reason, **kwargs):
         print(charging_station['model'] + ' from ' + charging_station['vendor_name'] + ' has booted.')
-        # global modelName
         self.modelName=charging_station['model']
         return call_result.BootNotificationPayload(
             current_time = datetime.utcnow().isoformat(),
@@ -69,20 +62,16 @@ class ChargePoint(cp):
         flag=False
         db = firebase.database()
         all_users = db.child("Users").get()
-        print(all_users)
-        # global cost
-        # global userName
-        # global modelName        
-        # global db_auth
+
         for user in all_users.each():
             if user.key()==name:
                 flag=True
                 break
 
         if flag:            
-            self.db_auth=True
+            
             lockAcquired = user.val()['userLock']
-            print(lockAcquired)
+            # print(lockAcquired)
             if lockAcquired:
                 print("The user is already Authorized elsewhere. Please wait and try again later!!!")  
                 return call_result.AuthorizePayload(
@@ -95,10 +84,12 @@ class ChargePoint(cp):
                     # certificate_status = 
                     evse_id = [int(self.cost)]
                 )          
-            else:            
+            else:     
+                # Get PUF model from database (To be done later)       
                 self.cost=user.val()['chargingCost']
+                self.db_auth=True
                 print(name + ' authorized successfully.')
-                print(self.cost)
+                print("Available balance of "+name + " " + str(self.cost))
                 db.child("Users").child(name).update({"userLock" : True})
                 self.userName=name
                 return call_result.AuthorizePayload(
@@ -114,7 +105,6 @@ class ChargePoint(cp):
 
         else:
             print(name + ' authorized unsuccessfully.')
-            # can add certificate _15118_certificate_hash_data
             self.db_auth=False
             self.cost='0'
             self.userName=''
@@ -132,62 +122,63 @@ class ChargePoint(cp):
 
     @on('DataTransfer')
     def data_transfer(self,data,vendor_id,**kwargs):
-        # global challenge
-        # global puf_auth
-        if(str(data)=="Request Challenge"):
-            #Generate Challenge
-            
-            n=random.randrange(0,4096,1)
-            bn=str(bin(n).replace("0b",""))
-            for i in range(len(bn)):
-                self.challenge[12-len(bn)+i]=(ord(bn[i])-ord('0'))
-            print("Challenge Generated-- " + str(self.challenge))
-            return call_result.DataTransferPayload(
-                status = 'Rejected',
-                data=self.challenge
-            )
-        elif(str(vendor_id)=="Challenge Sent"):
-            
-            #Request model from database and validate user
-            import fexpand as fe
-            start_time = time.time()
-            print(self.challenge)
-            response_expand=fe.expand(self.challenge)
-            time_expand=(time.time() - start_time)
-            print(data)
-            response_compact=data[:4]
-            time_compact=data[4]
-            # print(response_compact)
-            # print(response_expand)
 
-            if (time_compact < time_expand) and time_compact<1e-4  and time_expand > 1e-5 and response_compact==response_expand:
-                # print(time_expand - time_compact)
-                print("time_expand--"+str(time_expand))
-                print("time_compact--"+str(time_compact))
-                self.puf_auth=True
-                return call_result.DataTransferPayload(
-                    status = 'Accepted',
-                    data="Done"
-                )
-            else:
-                # print(time_expand - time_compact)
-                print("time_expand--"+str(time_expand))
-                print("time_compact--"+str(time_compact))
-                self.puf_auth=False
+        if(self.db_auth):
+
+            if(str(data)=="Request Challenge"):
+                #Generate Challenge
+                
+                n=random.randrange(0,4096,1)
+                bn=str(bin(n).replace("0b",""))
+                for i in range(len(bn)):
+                    self.challenge[12-len(bn)+i]=(ord(bn[i])-ord('0'))
+                print("Challenge Generated-- " + str(self.challenge))
                 return call_result.DataTransferPayload(
                     status = 'Rejected',
-                    data="Failed"
-                )                
+                    data=self.challenge
+                )
+            elif(str(vendor_id)=="Challenge Sent"):
+                
+                #Request model from database and validate user
+                import fexpand as fe
+                start_time = time.time()
+                print(self.challenge)
+                response_expand=fe.expand(self.challenge)
+                time_expand=(time.time() - start_time)
+                print(data)
+                response_compact=data[:4]
+                time_compact=data[4]
+                # print(response_compact)
+                # print(response_expand)
+
+                if (time_compact < time_expand) and time_compact<1e-4  and time_expand > 1e-5 and response_compact==response_expand:
+                    # print(time_expand - time_compact)
+                    print("time_expand--"+str(time_expand))
+                    print("time_compact--"+str(time_compact))
+                    self.puf_auth=True
+                    return call_result.DataTransferPayload(
+                        status = 'Accepted',
+                        data="Done"
+                    )
+                else:
+                    # print(time_expand - time_compact)
+                    print("time_expand--"+str(time_expand))
+                    print("time_compact--"+str(time_compact))
+                    self.puf_auth=False
+                    return call_result.DataTransferPayload(
+                        status = 'Rejected',
+                        data="Failed"
+                    )                
 
         else:
-            print(data)
-
+            print("Database not authorized.")
+            self.puf_auth=False
             return call_result.DataTransferPayload(
-                    status = 'Accepted',
-                    data = 'yo'
+                    status = 'Rejected',
+                    data = 'Failed'
                 )
 
-            # print(str(response)+" "+str(time_elapsed))
+            
 
     @on('ClearCache')
     def clear_cache(self):
@@ -304,61 +295,71 @@ class ChargePoint(cp):
 
     @on('TransactionEvent')
     def transaction_event(self, event_type, timestamp, trigger_reason, seq_no, transaction_data, **kwargs):
-        print('TransactionEvent')
-        # global cost
-        # global count
-        # global userName
-        # global modelName
-        # global charge_requested
+        print('TransactionEvent--')
+        global count
         charge_req=seq_no
-        # global puf_auth
-        # global db_auth
         if event_type=='Started' and self.puf_auth and self.db_auth:
-            if self.cost!='0':
-                # count=count+1
-                # certs = pem.parse_file('cert.pem')
-                # subprocess.call(["node","../fabric-samples/fabcar/javascript/invoke.js", "CAR"+str(count) , str(cost), str(certs[1]), str(timestamp), userName]) 
-                self.charge_requested = charge_req 
+            self.charge_requested = charge_req 
+            self.start_transaction=True
             return call_result.TransactionEventPayload(
                 total_cost = charge_req,
-                charging_priority = 2
+                charging_priority = 9
             ) 
         elif event_type=='Started':
+            print("Authorization was unsuccessful. Cannot start transaction")
+            self.start_transaction=False
             return call_result.TransactionEventPayload(
                 total_cost = 0,
-                charging_priority = 2
+                charging_priority = 0
             ) 
 
         elif event_type=='Ended':
-            # db = firebase.database()
-            all_users = db.child("Users").get()
-            if self.cost!='0':
+            if self.start_transaction:
+
+                all_users = db.child("Users").get()
                 count=count+1
                 certs = pem.parse_file('cert.pem')
-                # subprocess.call(["node","../fabric-samples/fabcar/javascript/invoke.js", "CAR"+str(count) , str(charge_requested), str(certs[1]), str(timestamp), userName])  
+                # subprocess.call(["node","../fabric-samples/fabcar/javascript/invoke.js", "CAR"+str(count) , str(self.charge_requested), str(certs[1]), str(timestamp), self.userName])  
                 print('done')
-            
-            for user in all_users.each():
-                if user.key() == self.userName:
-                    break
-    
-            initialCost = user.val()['chargingCost']
-            print(initialCost)
-            
-            db.child("Users").child(self.userName).set({"chargingCost":str(int(initialCost) - self.charge_requested), "userLock" : False})            
-            
-            # self.cost='0'
-            # count=0
-            # userName=''
-            # self.modelName=''
-            # challenge = [0,0,0,0,0,0,0,0,0,0,0,0]
-            
-            # db_auth=False
-            # puf_auth=False
-            return call_result.TransactionEventPayload(
-                total_cost = self.charge_requested,
-                charging_priority = 2
-            ) 
+                
+                for user in all_users.each():
+                    if user.key() == self.userName:
+                        break
+        
+                initialCost = user.val()['chargingCost']
+                print(initialCost)
+                
+                db.child("Users").child(self.userName).set({"chargingCost":str(int(initialCost) - self.charge_requested), "userLock" : False})            
+                
+                self.cost='0'
+                self.start_transaction=False
+                self.userName=''
+                self.modelName=''
+                self.challenge = [0,0,0,0,0,0,0,0,0,0,0,0]
+                self.charge_requested=0
+                self.db_auth=False
+                self.puf_auth=False
+                return call_result.TransactionEventPayload(
+                    total_cost = self.charge_requested,
+                    charging_priority = -9
+                )
+
+            else:
+                print("Error! Transaction didn't start.")
+                db.child("Users").child(self.userName).update({"userLock" : False})
+                self.cost='0'
+                self.start_transaction=False
+                self.userName=''
+                self.modelName=''
+                self.challenge = [0,0,0,0,0,0,0,0,0,0,0,0]
+                self.charge_requested=0
+                self.db_auth=False
+                self.puf_auth=False
+                
+                return call_result.TransactionEventPayload(
+                    total_cost = self.charge_requested,
+                    charging_priority = -9
+                )
 
     @on('Reset')
     def reset(self, type, **kwargs):
