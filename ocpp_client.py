@@ -10,12 +10,25 @@ import pem
 import subprocess
 import time
 import json
+
+
+
 auth_flag=False
 resp=[]
 puff_auth=False
 balance=0
 message_id = 0
 prev_msg_done = True
+file=sys.argv[1]
+f = open(file,'r')
+data = json.load(f)        
+model = data["Model"]
+vendorName = data["Vendor"]
+reason = 'PowerUp'
+name = data["Id"]
+charge_req=data["Amount"]
+response_done=False
+authorization_done=False
 
 
 class ChargePoint(cp):
@@ -29,12 +42,16 @@ class ChargePoint(cp):
                 },
                 reason=reason
         )
+
         response = await self.call(request)
+    
         
         if response.status == 'Accepted':
             prev_msg_done = True
             print("Connected to central system.")
             print("Response-- "+str(response))
+
+        
 
 
     async def send_authorize(self,idToken,typee):
@@ -106,7 +123,14 @@ class ChargePoint(cp):
             print(response) 
 
     async def send_transaction_event(self,eventType,triggerReason,seqNo,id):
+    
         global prev_msg_done
+        global authorization_done
+        while(True):
+            if authorization_done:
+                break
+            else:
+                await asyncio.sleep(0)
         request = call.TransactionEventPayload(
                 event_type=eventType,
                 timestamp=datetime.utcnow().isoformat(),
@@ -116,8 +140,15 @@ class ChargePoint(cp):
         )
         prev_msg_done = True
         response = await self.call(request)
-        print(response)
-        print(response.total_cost)
+        if response.charging_priority==-1:
+            print("Sufficient balance not available")
+        elif response.charging_priority==9:
+            print("Transaction Started worth amount-- "+str(response.total_cost))
+        elif response.charging_priority==0:
+            print("Cannot start transaction")
+        elif response.charging_priority==-9:
+            print("Charging finished worth-- "+str(response.total_cost))
+            
 
     async def send_reset(self,typee):
         request = call.ResetPayload(
@@ -163,19 +194,41 @@ class ChargePoint(cp):
         print(response)
 
     async def send_data_transfer(self,info,id):
-        request = call.DataTransferPayload(
-            data=info,
-            vendor_id=id
-        )
+        global resp
+        if info=="Request Challenge":
+            
+            request = call.DataTransferPayload(
+                data=info,
+                vendor_id=id
+            )
+            response = await self.call(request)
+            
+        else:
+            global response_done
+            while(True):
+                if response_done:
+                    break
+                else:
+                    await asyncio.sleep(0)
+            
+            response_done=False
+            
+            request = call.DataTransferPayload(
+                data=resp,
+                vendor_id=id
+            )  
+            response = await self.call(request)         
 
-        response = await self.call(request)
+
+        
         global puff_auth
+        global authorization_done
         if(response.status=='Rejected' and response.data!="Failed"):
             challenge=response.data
             print("Challenge recieved-- "+ str(challenge))
             
             import fcompact as fc
-            global resp
+            
             global prev_msg_done
             start_time = time.time()
             print(challenge)
@@ -186,14 +239,18 @@ class ChargePoint(cp):
             print(str(response)+" "+str(time_elapsed))
             prev_msg_done = True
             print("Response Recorded")
+            
+            response_done=True
 
         elif response.status=="Accepted" and response.data=="Done":            
             puff_auth=True
             prev_msg_done = True
+            authorization_done=True
             print("PUF Authorization Successful")
 
         elif response.status=="Rejected" and response.data=="Failed":            
             puff_auth=False
+            authorization_done=False
             print("PUF Authorization Unsuccessful")
 
         else:
@@ -299,6 +356,7 @@ class ChargePoint(cp):
         print(response)
 
 
+
 ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
 ssl_context.check_hostname = False
 ssl_context.verify_mode = ssl.CERT_NONE
@@ -308,173 +366,21 @@ ssl_context.load_verify_locations("cert.pem")
 async def main():          
     async with websockets.connect(
         'wss://localhost:9000/CP_1',
-         subprotocols=['ocpp2.0'],
-         ssl=ssl_context,
-         ping_interval = 7
+            subprotocols=['ocpp2.0'],
+            ssl=ssl_context,
+            ping_interval = 7
     ) as ws:        
         cp = ChargePoint('CP_1', ws)
-        f = open("car.json",'r')
-        data = json.load(f)        
-        model = data["Model"]
-        vendorName = data["Vendor"]
-        reason = 'PowerUp'
-        name = data["Id"]
-        charge_req=data["Amount"]
-        
         global resp
         global message_id
         global prev_msg_done
+        global model
+        global vendorName
+        global charge_req
+        global name
 
+        await asyncio.gather(cp.start(),cp.send_boot_notification(model,vendorName,'PowerUp'),cp.send_authorize(name, 'Central'),cp.send_data_transfer("Request Challenge","Challenge"),cp.send_data_transfer(resp,"Challenge Sent"),cp.send_transaction_event('Started', 'Authorized', int(charge_req), 'Hello World'),cp.send_transaction_event('Ended', 'EVDeparted', 1234, 'Hello World'))
 
-        task1=asyncio.create_task(cp.start()) 
-        task2=asyncio.create_task(cp.send_boot_notification(model,vendorName,reason)) 
-        task3=asyncio.create_task(cp.send_authorize(name, 'Central')) 
-        task4=asyncio.create_task(cp.send_data_transfer("Request Challenge","Challenge"))
-
-
-        await task1 
-        await task2
-        await task3
-        await task4
-
-
-        
-        task5=asyncio.create_task(cp.send_data_transfer(resp,"Challenge Sent"))
-        task6=asyncio.create_task(cp.send_transaction_event('Started', 'Authorized', int(charge_req), 'Hello World'))
-        task7=asyncio.create_task(cp.send_transaction_event('Ended', 'EVDeparted', 1234, 'Hello World'))
-
-        await task5 
-        await task6                       
-        await task7
-
-        # await cp.start() 
-        # await cp.send_boot_notification(model,vendorName,reason)
-        # await cp.send_authorize(name, 'Central')
-        # await cp.send_data_transfer("Request Challenge","Challenge")
-
-        # if message_id == 0 and prev_msg_done == True: 
-        #     message_id = 1
-        #     prev_msg_done = False 
-
-        #     task1=asyncio.create_task(cp.start()) 
-        #     task2=asyncio.create_task(cp.send_boot_notification(model,vendorName,reason)) 
-        #     task3=asyncio.create_task(cp.send_authorize(name, 'Central')) 
-        #     task4=asyncio.create_task(cp.send_data_transfer("Request Challenge","Challenge"))
-
-        #     await task1 
-        #     await task2
-        #     await task3
-        #     await task4
-            
-        #     task5=asyncio.create_task(cp.send_data_transfer(resp,"Challenge Sent"))
-        #     task6=asyncio.create_task(cp.send_transaction_event('Started', 'Authorized', int(charge_req), 'Hello World'))
-        #     task7=asyncio.create_task(cp.send_transaction_event('Ended', 'EVDeparted', 1234, 'Hello World'))
-
-        #     await task5 
-        #     await task6                       
-        #     await task7
-
-        #     # await asyncio.gather(cp.start(), cp.send_boot_notification(model,vendorName,reason), asyncio.ensure_future(main()))              
-
-        # elif message_id == 1 and prev_msg_done == True:
-        #     message_id = 2
-        #     prev_msg_done = False
-        #     await asyncio.gather(cp.start(), cp.send_authorize(name, 'Central'), asyncio.ensure_future(main())) 
-
-        # elif message_id == 2 and prev_msg_done == True:
-        #     message_id = 3
-        #     prev_msg_done = False
-        #     await asyncio.gather(cp.start(),cp.send_data_transfer("Request Challenge","Challenge"), asyncio.ensure_future(main()))
-
-        # elif message_id == 3 and prev_msg_done == True:
-        #     message_id = 4
-        #     prev_msg_done = False
-        #     await asyncio.gather(cp.start(),cp.send_data_transfer(resp,"Challenge Sent"), asyncio.ensure_future(main()))
-        
-        # elif message_id == 4 and prev_msg_done == True:
-        #     global auth_flag
-        #     global puff_auth
-        #     message_id = 5
-        #     prev_msg_done = False
-        #     if(auth_flag and puff_auth):
-        #         global balance
-        #         if(int(charge_req) <= balance):
-        #             print(charge_req)
-        #             print(balance)
-        #             await asyncio.gather(cp.start(),cp.send_transaction_event('Started', 'Authorized', int(charge_req), 'Hello World'), asyncio.ensure_future(main())) 
-        #         else:
-        #             print("Sufficient Balance not available. Please recharge")
-        #             await asyncio.ensure_future(main())
-        #     else:
-        #         print("Transaction is not authorized")
-        #         await asyncio.ensure_future(main())
-
-        # elif message_id == 5 and prev_msg_done == True:
-        #     message_id = 6
-        #     # time.sleep(10)
-        #     await asyncio.gather(cp.start(),cp.send_transaction_event('Ended', 'EVDeparted', 1234, 'Hello World'))
-
-        # else:
-        #     await asyncio.ensure_future(main())
-
-     
-        
 
 if __name__ == '__main__':         
     asyncio.run(main())
-
-
-
-        # if message == 'Boot Notification':
-        #         print("Enter Model:")
-        #         model  = str(input())
-        #         print("Enter Vendor Name:")
-        #         vendorName = str(input())
-        #         print("Enter Reason:")
-        #         reason = str(input())
-                
-        #         asyncio.ensure_future(cp.start())
-        #         asyncio.ensure_future(cp.send_boot_notification(model,vendorName,reason))                
-        #         await asyncio.gather(cp.start(), cp.send_boot_notification(model,vendorName,reason), asyncio.ensure_future(main()))                
-
-        # elif message == 'Notify Event':
-        #         print
-        #         await asyncio.gather(cp.start(), cp.send_notify_event(False,0,'Alerting','actualValue',True,'HardWiredNotification','comp','var'), asyncio.ensure_future(main()))
-
-        # elif message == "Get Report":
-        #         print("Enter Report Id")
-        #         reportId = int(input())
-        #         print(reportId)
-        #         await asyncio.gather(cp.start(), cp.send_get_report(reportId), asyncio.ensure_future(main()))
-        # elif message == "Authorize":
-        #         # print("Enter Name/Id")
-        #         # name = str(input())
-        #         name=data["Id"]
-        #         await asyncio.gather(cp.start(), cp.send_authorize(name, 'Central'), asyncio.ensure_future(main())) 
-        # elif message == "Transaction Start":
-        #         global auth_flag
-        #         global puff_auth
-        #         if(auth_flag and puff_auth):
-        #             global balance
-        #             # print("Enter Charging Amount")
-        #             charge_req=data["Amount"]
-        #             if(int(charge_req) <= balance):
-        #                 await asyncio.gather(cp.start(),cp.send_transaction_event('Started', 'Authorized', int(charge_req), 'Hello World'), asyncio.ensure_future(main())) 
-        #             else:
-        #                 print("Sufficient Balance not available. Please recharge")
-        #                 await asyncio.ensure_future(main())
-        #         else:
-        #             print("Transaction is not authorized")
-        #             await asyncio.ensure_future(main())
-        # elif message == "Transaction End":
-        #         await asyncio.gather(cp.start(),cp.send_transaction_event('Ended', 'EVDeparted', 1234, 'Hello World'), asyncio.ensure_future(main())) 
-        # elif message == "Data Transfer":
-        #         await asyncio.gather(cp.start(),cp.send_data_transfer("1234","Normal"), asyncio.ensure_future(main())) 
-        # elif message == "Request Challenge":
-        #         await asyncio.gather(cp.start(),cp.send_data_transfer("Request Challenge","Challenge"), asyncio.ensure_future(main())) 
-        # elif message == "Request Validation":
-        #         global resp
-        #         await asyncio.gather(cp.start(),cp.send_data_transfer(resp,"Challenge Sent"), asyncio.ensure_future(main())) 
-        # else:
-        #         print("Please enter a valid message")
-        #         await asyncio.ensure_future(main())  

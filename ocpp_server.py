@@ -37,7 +37,6 @@ count=0
 
 class ChargePoint(cp):
     cost='0'
-    count=0
     userName=''
     modelName=''
     challenge=[0,0,0,0,0,0,0,0,0,0,0,0]
@@ -104,11 +103,15 @@ class ChargePoint(cp):
                 )
 
         else:
-            print(name + ' authorized unsuccessfully.')
+            print(name + ' not found in database.')
             self.db_auth=False
             self.cost='0'
             self.userName=''
             self.modelName=''
+            self.puf_auth=False
+            self.start_transaction=False
+            self.charge_requested=0
+            self.challenge=[0,0,0,0,0,0,0,0,0,0,0,0]
             return call_result.AuthorizePayload(
                 id_token_info = {
                     'status' : 'Invalid',
@@ -142,19 +145,16 @@ class ChargePoint(cp):
                 #Request model from database and validate user
                 import fexpand as fe
                 start_time = time.time()
-                print(self.challenge)
                 response_expand=fe.expand(self.challenge)
                 time_expand=(time.time() - start_time)
-                print(data)
                 response_compact=data[:4]
                 time_compact=data[4]
-                # print(response_compact)
-                # print(response_expand)
 
                 if (time_compact < time_expand) and time_compact<1e-4  and time_expand > 1e-5 and response_compact==response_expand:
                     # print(time_expand - time_compact)
                     print("time_expand--"+str(time_expand))
                     print("time_compact--"+str(time_compact))
+                    print("PUF authorization successful")
                     self.puf_auth=True
                     return call_result.DataTransferPayload(
                         status = 'Accepted',
@@ -164,6 +164,8 @@ class ChargePoint(cp):
                     # print(time_expand - time_compact)
                     print("time_expand--"+str(time_expand))
                     print("time_compact--"+str(time_compact))
+                    print("PUF authorization unsuccessful")
+                    db.child("Users").child(self.userName).update({"userLock" : False})
                     self.puf_auth=False
                     return call_result.DataTransferPayload(
                         status = 'Rejected',
@@ -295,52 +297,58 @@ class ChargePoint(cp):
 
     @on('TransactionEvent')
     def transaction_event(self, event_type, timestamp, trigger_reason, seq_no, transaction_data, **kwargs):
-        print('TransactionEvent--')
-        global count
         charge_req=seq_no
-        if event_type=='Started' and self.puf_auth and self.db_auth:
+        if event_type=='Started' and self.db_auth and self.puf_auth and int(self.cost)>=charge_req:
             self.charge_requested = charge_req 
             self.start_transaction=True
+            print("Starting Transaction")
             return call_result.TransactionEventPayload(
                 total_cost = charge_req,
                 charging_priority = 9
             ) 
+        elif event_type=='Started' and self.db_auth and self.puf_auth:
+            print("Insufficient balance. Cannot start transaction")
+            self.start_transaction=False
+            return call_result.TransactionEventPayload(
+                total_cost = 0,
+                charging_priority = -1
+            ) 
+
         elif event_type=='Started':
             print("Authorization was unsuccessful. Cannot start transaction")
             self.start_transaction=False
             return call_result.TransactionEventPayload(
                 total_cost = 0,
                 charging_priority = 0
-            ) 
+            )            
 
         elif event_type=='Ended':
             if self.start_transaction:
-
+                global count
                 all_users = db.child("Users").get()
                 count=count+1
                 certs = pem.parse_file('cert.pem')
                 # subprocess.call(["node","../fabric-samples/fabcar/javascript/invoke.js", "CAR"+str(count) , str(self.charge_requested), str(certs[1]), str(timestamp), self.userName])  
-                print('done')
+                print('Transaction Ended')
                 
                 for user in all_users.each():
                     if user.key() == self.userName:
                         break
         
                 initialCost = user.val()['chargingCost']
-                print(initialCost)
-                
                 db.child("Users").child(self.userName).set({"chargingCost":str(int(initialCost) - self.charge_requested), "userLock" : False})            
-                
+                print("Remaining balance of "+self.userName+" "+str(int(initialCost) - self.charge_requested))
                 self.cost='0'
                 self.start_transaction=False
                 self.userName=''
                 self.modelName=''
                 self.challenge = [0,0,0,0,0,0,0,0,0,0,0,0]
+                var=self.charge_requested
                 self.charge_requested=0
                 self.db_auth=False
                 self.puf_auth=False
                 return call_result.TransactionEventPayload(
-                    total_cost = self.charge_requested,
+                    total_cost = var,
                     charging_priority = -9
                 )
 
@@ -358,7 +366,7 @@ class ChargePoint(cp):
                 
                 return call_result.TransactionEventPayload(
                     total_cost = self.charge_requested,
-                    charging_priority = -9
+                    charging_priority = 0
                 )
 
     @on('Reset')
