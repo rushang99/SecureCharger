@@ -44,6 +44,10 @@ class ChargePoint(cp):
     puf_auth=False
     start_transaction=False
     charge_requested = 0
+    response_compact=[]
+    response_expand=[]
+    time_compact=0
+    time_expand=0
 
     @on('BootNotification')
     def on_boot_notitication(self, charging_station, reason, **kwargs):
@@ -133,28 +137,31 @@ class ChargePoint(cp):
                 
                 n=random.randrange(0,4096,1)
                 bn=str(bin(n).replace("0b",""))
+                self.challenge=[0,0,0,0,0,0,0,0,0,0,0,0]
                 for i in range(len(bn)):
                     self.challenge[12-len(bn)+i]=(ord(bn[i])-ord('0'))
-                print("Challenge Generated-- " + str(self.challenge))
+                print(self.userName+"--> Challenge Generated-- " + str(self.challenge))
+                #Request model from database and validate user
+                import fexpand as fe
+                start_time = time.time()
+                self.response_expand=fe.expand(self.challenge)
+                self.time_expand=(time.time() - start_time)
+
                 return call_result.DataTransferPayload(
                     status = 'Rejected',
                     data=self.challenge
                 )
             elif(str(vendor_id)=="Challenge Sent"):
-                
-                #Request model from database and validate user
-                import fexpand as fe
-                start_time = time.time()
-                response_expand=fe.expand(self.challenge)
-                time_expand=(time.time() - start_time)
-                response_compact=data[:4]
-                time_compact=data[4]
+                print(self.userName+"--> Response recorded--"+str(self.challenge))
 
-                if (time_compact < time_expand) and time_compact<1e-4  and time_expand > 1e-5 and response_compact==response_expand:
+                self.response_compact=data[:4]
+                self.time_compact=data[4]
+                # if (time_compact < time_expand) and time_compact<1e-4  and time_expand > 1e-5 and response_compact==response_expand:
+                if self.response_compact==self.response_expand:
                     # print(time_expand - time_compact)
-                    print("time_expand--"+str(time_expand))
-                    print("time_compact--"+str(time_compact))
-                    print("PUF authorization successful")
+                    print("time_expand--"+str(self.time_expand))
+                    print("time_compact--"+str(self.time_compact))
+                    print(self.userName+"--> PUF authorization successful--"+str(self.challenge))
                     self.puf_auth=True
                     return call_result.DataTransferPayload(
                         status = 'Accepted',
@@ -162,9 +169,9 @@ class ChargePoint(cp):
                     )
                 else:
                     # print(time_expand - time_compact)
-                    print("time_expand--"+str(time_expand))
-                    print("time_compact--"+str(time_compact))
-                    print("PUF authorization unsuccessful")
+                    print("time_expand--"+str(self.time_expand))
+                    print("time_compact--"+str(self.time_compact))
+                    print(self.userName+"--> PUF authorization unsuccessful--"+str(self.challenge))
                     db.child("Users").child(self.userName).update({"userLock" : False})
                     self.puf_auth=False
                     return call_result.DataTransferPayload(

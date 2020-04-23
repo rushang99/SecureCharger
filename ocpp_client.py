@@ -20,7 +20,7 @@ balance=0
 message_id = 0
 prev_msg_done = True
 file=sys.argv[1]
-f = open(file,'r')
+f = open("cars/"+file,'r')
 data = json.load(f)        
 model = data["Model"]
 vendorName = data["Vendor"]
@@ -71,7 +71,7 @@ class ChargePoint(cp):
             auth_flag = True
             balance=response.evse_id[0]
             prev_msg_done = True
-            print("Authorization Sucessful")
+            print(idToken+"-->Authorization Sucessful")
             # print(response)
         elif response.id_token_info['status'] == 'Invalid':
             auth_flag=False
@@ -363,21 +363,22 @@ ssl_context.verify_mode = ssl.CERT_NONE
 ssl_context.load_verify_locations("cert.pem")
 
 
-async def main():          
+async def main(): 
+    global name         
     async with websockets.connect(
-        'wss://localhost:9000/CP_1',
+        'wss://localhost:9000/'+name,
             subprotocols=['ocpp2.0'],
             ssl=ssl_context,
             ping_interval = 7
     ) as ws:        
-        cp = ChargePoint('CP_1', ws)
+        cp = ChargePoint(name, ws)
         global resp
         global message_id
         global prev_msg_done
         global model
         global vendorName
         global charge_req
-        global name
+        
 
         await asyncio.gather(cp.start(),cp.send_boot_notification(model,vendorName,'PowerUp'),cp.send_authorize(name, 'Central'),cp.send_data_transfer("Request Challenge","Challenge"),cp.send_data_transfer(resp,"Challenge Sent"),cp.send_transaction_event('Started', 'Authorized', int(charge_req), 'Hello World'),cp.send_transaction_event('Ended', 'EVDeparted', 1234, 'Hello World'))
 
