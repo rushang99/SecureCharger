@@ -21,8 +21,8 @@ config = {
     "projectId": "charger-1eb48",
     "storageBucket": "charger-1eb48.appspot.com",
     "messagingSenderId": "430093083458",
-    "serviceAccount": "/home/raghav/SecureCharger/secure.json"
-    # "serviceAccount": "/home/rushang99/Downloads/SecureCharger/secure.json"
+    # "serviceAccount": "/home/raghav/SecureCharger/secure.json"
+    "serviceAccount": "/home/rushang99/Downloads/SecureCharger/secure.json"
 }
 
 
@@ -48,9 +48,12 @@ class ChargePoint(cp):
     response_expand=[]
     time_compact=0
     time_expand=0
+    start_time = 0
+    end_time = 0
 
     @on('BootNotification')
     def on_boot_notitication(self, charging_station, reason, **kwargs):
+        self.start_time = time.time()
         print(charging_station['model'] + ' from ' + charging_station['vendor_name'] + ' has booted.')
         self.modelName=charging_station['model']
         return call_result.BootNotificationPayload(
@@ -95,6 +98,7 @@ class ChargePoint(cp):
                 print("Available balance of "+name + " " + str(self.cost))
                 db.child("Users").child(name).update({"userLock" : True})
                 self.userName=name
+                print(self.userName)
                 return call_result.AuthorizePayload(
                     id_token_info = {
                         'status' : 'Accepted',
@@ -343,7 +347,14 @@ class ChargePoint(cp):
                         break
         
                 initialCost = user.val()['chargingCost']
-                db.child("Users").child(self.userName).set({"chargingCost":str(int(initialCost) - self.charge_requested), "userLock" : False})            
+                db.child("Users").child(self.userName).set({"chargingCost":str(int(initialCost) - self.charge_requested), "userLock" : False})  
+                self.end_time = time.time()
+                time_int = self.end_time - self.start_time
+                file_object = open('time_int.txt', 'a')
+                file_object.write("\n")
+                file_object.write(str(time_int))
+                file_object.close()
+
                 print("Remaining balance of "+self.userName+" "+str(int(initialCost) - self.charge_requested))
                 self.cost='0'
                 self.start_transaction=False

@@ -142,12 +142,14 @@ class ChargePoint(cp):
         response = await self.call(request)
         if response.charging_priority==-1:
             print("Sufficient balance not available")
+            sys.exit(0)
         elif response.charging_priority==9:
             print("Transaction Started worth amount-- "+str(response.total_cost))
         elif response.charging_priority==0:
             print("Cannot start transaction")
         elif response.charging_priority==-9:
             print("Charging finished worth-- "+str(response.total_cost))
+            sys.exit(0)
             
 
     async def send_reset(self,typee):
