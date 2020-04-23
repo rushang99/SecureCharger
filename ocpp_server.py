@@ -154,7 +154,7 @@ class ChargePoint(cp):
                 response_compact=data[:4]
                 time_compact=data[4]
 
-                if (time_compact < time_expand) and time_compact<1e-4  and time_expand > 1e-5 and response_compact==response_expand:
+                if (time_compact < time_expand) and time_compact<1e-4 and time_expand > 1e-5 and response_compact==response_expand:
                     # print(time_expand - time_compact)
                     print("time_expand--"+str(time_expand))
                     print("time_compact--"+str(time_compact))
