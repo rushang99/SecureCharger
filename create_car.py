@@ -3,8 +3,9 @@ import random
 import string
 import pyrebase
 import pem
+import sys
 
-
+num_cars = int(sys.argv[1])
 config = {
     "apiKey": "AIzaSyAGas29t240FwqdvXjdwzz4kITTN2Ix1ro",
     "authDomain": "charger-1eb48.firebaseapp.com",
@@ -22,7 +23,7 @@ password = "12345678"
 user = auth.sign_in_with_email_and_password(email,password)
 db = firebase.database()
 
-for i in range(0, 10):
+for i in range(0, num_cars):
     amount  = random.randint(100, 500)
     letters = string.ascii_letters
     Model = ''.join(random.choice(letters) for i in range(random.randint(1,9)))

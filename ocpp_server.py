@@ -13,6 +13,7 @@ import pem
 import random
 import sys
 import time
+from threading import Thread
 
 config = {
     "apiKey": "AIzaSyAGas29t240FwqdvXjdwzz4kITTN2Ix1ro",
@@ -44,13 +45,22 @@ class ChargePoint(cp):
     puf_auth=False
     start_transaction=False
     charge_requested = 0
+    response_compact=[]
+    response_expand=[]
+    time_compact=0
+    time_expand=0
     start_time = 0
     end_time = 0
+    hyp_start = 0
+    hyp_end = 0
+    auth_start = 0
+    auth_end = 0
 
     @on('BootNotification')
-    def on_boot_notitication(self, charging_station, reason, **kwargs):
+    async def on_boot_notitication(self, charging_station, reason, **kwargs):
+        await asyncio.sleep(0)
         self.start_time = time.time()
-        print(charging_station['model'] + ' from ' + charging_station['vendor_name'] + ' has booted.')
+        # print(charging_station['model'] + ' from ' + charging_station['vendor_name'] + ' has booted.')
         self.modelName=charging_station['model']
         return call_result.BootNotificationPayload(
             current_time = datetime.utcnow().isoformat(),
@@ -59,7 +69,9 @@ class ChargePoint(cp):
         )
 
     @on('Authorize')
-    def on_authorize(self, id_token, **kwargs):
+    async def on_authorize(self, id_token, **kwargs):
+        self.auth_start = time.time()
+        await asyncio.sleep(0)        
         name=id_token['id_token']
         flag=False
         db = firebase.database()
@@ -75,7 +87,7 @@ class ChargePoint(cp):
             lockAcquired = user.val()['userLock']
             # print(lockAcquired)
             if lockAcquired:
-                print("The user is already Authorized elsewhere. Please wait and try again later!!!")  
+                # print("The user is already Authorized elsewhere. Please wait and try again later!!!")  
                 return call_result.AuthorizePayload(
                     id_token_info = {
                         'status' : 'NotAtThisLocation',
@@ -91,10 +103,15 @@ class ChargePoint(cp):
                 self.cost=user.val()['chargingCost']
                 self.db_auth=True
                 print(name + ' authorized successfully.')
-                print("Available balance of "+name + " " + str(self.cost))
+                # print("Available balance of "+name + " " + str(self.cost))
                 db.child("Users").child(name).update({"userLock" : True})
                 self.userName=name
-                print(self.userName)
+                self.auth_end = time.time()
+                file_object = open('time_auth.txt', 'a')
+                file_object.write("\n")
+                file_object.write(self.userName + " --> " + str(self.auth_end - self.auth_start))
+                file_object.close()
+                # print(self.userName)
                 return call_result.AuthorizePayload(
                     id_token_info = {
                         'status' : 'Accepted',
@@ -107,7 +124,7 @@ class ChargePoint(cp):
                 )
 
         else:
-            print(name + ' not found in database.')
+            # print(name + ' not found in database.')
             self.db_auth=False
             self.cost='0'
             self.userName=''
@@ -128,37 +145,39 @@ class ChargePoint(cp):
             )            
 
     @on('DataTransfer')
-    def data_transfer(self,data,vendor_id,**kwargs):
-
+    async def data_transfer(self,data,vendor_id,**kwargs):
+        await asyncio.sleep(0)
         if(self.db_auth):
-
             if(str(data)=="Request Challenge"):
                 #Generate Challenge
                 
                 n=random.randrange(0,4096,1)
                 bn=str(bin(n).replace("0b",""))
+                self.challenge=[0,0,0,0,0,0,0,0,0,0,0,0]
                 for i in range(len(bn)):
                     self.challenge[12-len(bn)+i]=(ord(bn[i])-ord('0'))
-                print("Challenge Generated-- " + str(self.challenge))
+                # print(self.userName+"--> Challenge Generated-- " + str(self.challenge))
+                #Request model from database and validate user
+                import fexpand as fe
+                start_time = time.time()
+                self.response_expand=fe.expand(self.challenge)
+                self.time_expand=(time.time() - start_time)
+
                 return call_result.DataTransferPayload(
                     status = 'Rejected',
                     data=self.challenge
                 )
             elif(str(vendor_id)=="Challenge Sent"):
-                
-                #Request model from database and validate user
-                import fexpand as fe
-                start_time = time.time()
-                response_expand=fe.expand(self.challenge)
-                time_expand=(time.time() - start_time)
-                response_compact=data[:4]
-                time_compact=data[4]
+                # print(self.userName+"--> Response recorded--"+str(self.challenge))
 
-                if (time_compact < time_expand) and time_compact<1e-4 and time_expand > 1e-5 and response_compact==response_expand:
+                self.response_compact=data[:4]
+                self.time_compact=data[4]
+                # if (time_compact < time_expand) and time_compact<1e-4  and time_expand > 1e-5 and response_compact==response_expand:
+                if self.response_compact==self.response_expand:
                     # print(time_expand - time_compact)
-                    print("time_expand--"+str(time_expand))
-                    print("time_compact--"+str(time_compact))
-                    print("PUF authorization successful")
+                    # print("time_expand--"+str(self.time_expand))
+                    # print("time_compact--"+str(self.time_compact))
+                    # print(self.userName+"--> PUF authorization successful--"+str(self.challenge))
                     self.puf_auth=True
                     return call_result.DataTransferPayload(
                         status = 'Accepted',
@@ -166,9 +185,9 @@ class ChargePoint(cp):
                     )
                 else:
                     # print(time_expand - time_compact)
-                    print("time_expand--"+str(time_expand))
-                    print("time_compact--"+str(time_compact))
-                    print("PUF authorization unsuccessful")
+                    # print("time_expand--"+str(self.time_expand))
+                    # print("time_compact--"+str(self.time_compact))
+                    # print(self.userName+"--> PUF authorization unsuccessful--"+str(self.challenge))
                     db.child("Users").child(self.userName).update({"userLock" : False})
                     self.puf_auth=False
                     return call_result.DataTransferPayload(
@@ -177,7 +196,7 @@ class ChargePoint(cp):
                     )                
 
         else:
-            print("Database not authorized.")
+            # print("Database not authorized.")
             self.puf_auth=False
             return call_result.DataTransferPayload(
                     status = 'Rejected',
@@ -187,7 +206,7 @@ class ChargePoint(cp):
             
 
     @on('ClearCache')
-    def clear_cache(self):
+    async def clear_cache(self):
         print('Clear Cache request set')
         return call_result.ClearCachePayload(
             status = 'Accepted'
@@ -300,7 +319,8 @@ class ChargePoint(cp):
         )
 
     @on('TransactionEvent')
-    def transaction_event(self, event_type, timestamp, trigger_reason, seq_no, transaction_data, **kwargs):
+    async def transaction_event(self, event_type, timestamp, trigger_reason, seq_no, transaction_data, **kwargs):
+        await asyncio.sleep(0)
         charge_req=seq_no
         if event_type=='Started' and self.db_auth and self.puf_auth and int(self.cost)>=charge_req:
             self.charge_requested = charge_req 
@@ -332,8 +352,14 @@ class ChargePoint(cp):
                 all_users = db.child("Users").get()
                 count=count+1
                 certs = pem.parse_file('cert.pem')
-                # subprocess.call(["node","../fabric-samples/fabcar/javascript/invoke.js", "CAR"+str(count) , str(self.charge_requested), str(certs[1]), str(timestamp), self.userName])  
-                print('Transaction Ended')
+                hyp_start = time.time()
+                # subprocess.call(["node","../../hypledger/fabric-samples/fabcar/javascript/invoke.js", "CAR"+str(count) , str(self.charge_requested), str(certs[1]), str(timestamp), self.userName]) 
+                hyp_end = time.time() 
+                file_object = open('hyp_int.txt', 'a')
+                file_object.write("\n")
+                file_object.write(self.userName + " --> " + str(hyp_end - hyp_start))
+                file_object.close()
+                # print('Transaction Ended')
                 
                 for user in all_users.each():
                     if user.key() == self.userName:
@@ -345,10 +371,10 @@ class ChargePoint(cp):
                 time_int = self.end_time - self.start_time
                 file_object = open('time_int.txt', 'a')
                 file_object.write("\n")
-                file_object.write(str(time_int))
+                file_object.write(self.userName + " --> " + str(time_int))
                 file_object.close()
 
-                print("Remaining balance of "+self.userName+" "+str(int(initialCost) - self.charge_requested))
+                # print("Remaining balance of "+self.userName+" "+str(int(initialCost) - self.charge_requested))
                 self.cost='0'
                 self.start_transaction=False
                 self.userName=''
@@ -364,7 +390,7 @@ class ChargePoint(cp):
                 )
 
             else:
-                print("Error! Transaction didn't start.")
+                # print("Error! Transaction didn't start.")
                 db.child("Users").child(self.userName).update({"userLock" : False})
                 self.cost='0'
                 self.start_transaction=False
@@ -417,6 +443,9 @@ async def on_connect(websocket, path):
     """
     charge_point_id = path.strip('/')
     cp = ChargePoint(charge_point_id, websocket)
+    # new_loop = asyncio.new_event_loop()
+    # t = Thread(target=start_loop, args=(new_loop,))
+    # t.start()
     await cp.start()
 
 

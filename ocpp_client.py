@@ -49,7 +49,7 @@ class ChargePoint(cp):
         if response.status == 'Accepted':
             prev_msg_done = True
             print("Connected to central system.")
-            print("Response-- "+str(response))
+            # print("Response-- "+str(response))
 
         
 
@@ -71,7 +71,7 @@ class ChargePoint(cp):
             auth_flag = True
             balance=response.evse_id[0]
             prev_msg_done = True
-            print("Authorization Sucessful")
+            print(idToken+"-->Authorization Sucessful")
             # print(response)
         elif response.id_token_info['status'] == 'Invalid':
             auth_flag=False
@@ -88,9 +88,9 @@ class ChargePoint(cp):
                 reservation_id= reservId
         )
         response = await self.call(request)
-        if response.status == 'Accepted':
-            print("Reservation Cancelled")
-            print(response) 
+        # if response.status == 'Accepted':
+        #     # print("Reservation Cancelled")
+        #     # print(response) 
 
     async def send_set_variables(self):
         request = call.SetVariablesPayload(
@@ -98,9 +98,9 @@ class ChargePoint(cp):
         )
         response = await self.call(request)
 
-        if response.set_variable_result[0]['attribute_status'] == 'Accepted':
-            print("Variables Set")
-            print(response) 
+        # if response.set_variable_result[0]['attribute_status'] == 'Accepted':
+        #     # print("Variables Set")
+        #     # print(response) 
         
     async def send_get_variables(self):
         request = call.GetVariablesPayload(
@@ -108,9 +108,9 @@ class ChargePoint(cp):
         )
         response = await self.call(request)
 
-        if response.get_variable_result[0]['attribute_status'] == 'Accepted':
-            print("Variables Recieved")
-            print(response) 
+        # if response.get_variable_result[0]['attribute_status'] == 'Accepted':
+        #     # print("Variables Recieved")
+        #     # print(response) 
 
     async def send_get_report(self, reportId):
         request = call.GetReportPayload(
@@ -118,9 +118,9 @@ class ChargePoint(cp):
         )
         response = await self.call(request)
 
-        if response.status == 'Accepted':
-            print("Report Recieved")
-            print(response) 
+        # if response.status == 'Accepted':
+        #     # print("Report Recieved")
+        #     # print(response)
 
     async def send_transaction_event(self,eventType,triggerReason,seqNo,id):
     
@@ -141,15 +141,15 @@ class ChargePoint(cp):
         prev_msg_done = True
         response = await self.call(request)
         if response.charging_priority==-1:
-            print("Sufficient balance not available")
+            # print("Sufficient balance not available")
             sys.exit(0)
-        elif response.charging_priority==9:
-            print("Transaction Started worth amount-- "+str(response.total_cost))
-        elif response.charging_priority==0:
-            print("Cannot start transaction")
+        # elif response.charging_priority==9:
+        #     # print("Transaction Started worth amount-- "+str(response.total_cost))
+        # elif response.charging_priority==0:
+        #     print("Cannot start transaction")
         elif response.charging_priority==-9:
-            print("Charging finished worth-- "+str(response.total_cost))
-            sys.exit(0)
+            # print("Charging finished worth-- "+str(response.total_cost))
+            print("Done")
             
 
     async def send_reset(self,typee):
@@ -158,9 +158,9 @@ class ChargePoint(cp):
         )
         response = await self.call(request)
 
-        if response.status=='Accepted':
-            print('Resetting')
-            print(response)
+        # if response.status=='Accepted':
+        #     # print('Resetting')
+        #     # print(response)
 
     async def send_change_availability(self,id,status):
         request = call.ChangeAvailabilityPayload(
@@ -169,9 +169,9 @@ class ChargePoint(cp):
         )
         response = await self.call(request)
 
-        if response.status=='Accepted':
-            print('Changing availability')
-            print(response)
+        # if response.status=='Accepted':
+        #     # print('Changing availability')
+        #     # print(response)
 
     async def send_status_notification(self,status,evse_id,connector_id):
         request = call.StatusNotificationPayload(
@@ -182,7 +182,7 @@ class ChargePoint(cp):
         )
         response = await self.call(request)
 
-        print(response)
+        # print(response)
 
     async def send_notify_event(self,tbc,seqNo,trigger,actualValue,cleared,eventNotificationType,componentName,variableName):
         request = call.NotifyEventPayload(
@@ -193,7 +193,7 @@ class ChargePoint(cp):
         )
         response = await self.call(request)
 
-        print(response)
+        # print(response)
 
     async def send_data_transfer(self,info,id):
         global resp
@@ -233,14 +233,14 @@ class ChargePoint(cp):
             
             global prev_msg_done
             start_time = time.time()
-            print(challenge)
+            # print(challenge)
             resp=fc.compact(challenge)
             time_elapsed=(time.time() - start_time)
             resp.append(time_elapsed)
-            print(resp)                     
-            print(str(response)+" "+str(time_elapsed))
+            # print(resp)                     
+            # print(str(response)+" "+str(time_elapsed))
             prev_msg_done = True
-            print("Response Recorded")
+            # print("Response Recorded")
             
             response_done=True
 
@@ -255,8 +255,8 @@ class ChargePoint(cp):
             authorization_done=False
             print("PUF Authorization Unsuccessful")
 
-        else:
-            print(response.data)
+        # else:
+        #     # print(response.data)
 
     
 
@@ -365,24 +365,26 @@ ssl_context.verify_mode = ssl.CERT_NONE
 ssl_context.load_verify_locations("cert.pem")
 
 
-async def main():          
+async def main(): 
+    global name         
     async with websockets.connect(
-        'wss://localhost:9000/CP_1',
+        'wss://localhost:9000/'+name,
             subprotocols=['ocpp2.0'],
             ssl=ssl_context,
             ping_interval = 7
     ) as ws:        
-        cp = ChargePoint('CP_1', ws)
+        cp = ChargePoint(name, ws)
         global resp
         global message_id
         global prev_msg_done
         global model
         global vendorName
         global charge_req
-        global name
+        
 
         await asyncio.gather(cp.start(),cp.send_boot_notification(model,vendorName,'PowerUp'),cp.send_authorize(name, 'Central'),cp.send_data_transfer("Request Challenge","Challenge"),cp.send_data_transfer(resp,"Challenge Sent"),cp.send_transaction_event('Started', 'Authorized', int(charge_req), 'Hello World'),cp.send_transaction_event('Ended', 'EVDeparted', 1234, 'Hello World'))
-
+        # ws.close()
+        
 
 if __name__ == '__main__':         
     asyncio.run(main())
