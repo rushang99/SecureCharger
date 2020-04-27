@@ -21,8 +21,8 @@ config = {
     "projectId": "charger-1eb48",
     "storageBucket": "charger-1eb48.appspot.com",
     "messagingSenderId": "430093083458",
-    # "serviceAccount": "/home/raghav/SecureCharger/secure.json"
-    "serviceAccount": "/home/rushang99/Downloads/SecureCharger/secure.json"
+    "serviceAccount": "/home/raghav/SecureCharger/secure.json"
+    # "serviceAccount": "/home/rushang99/Downloads/SecureCharger/secure.json"
 }
 
 
@@ -98,7 +98,7 @@ class ChargePoint(cp):
                 print("Available balance of "+name + " " + str(self.cost))
                 db.child("Users").child(name).update({"userLock" : True})
                 self.userName=name
-                print(self.userName)
+                time.sleep(5)
                 return call_result.AuthorizePayload(
                     id_token_info = {
                         'status' : 'Accepted',
@@ -112,14 +112,7 @@ class ChargePoint(cp):
 
         else:
             print(name + ' not found in database.')
-            self.db_auth=False
-            self.cost='0'
-            self.userName=''
-            self.modelName=''
-            self.puf_auth=False
-            self.start_transaction=False
-            self.charge_requested=0
-            self.challenge=[0,0,0,0,0,0,0,0,0,0,0,0]
+
             return call_result.AuthorizePayload(
                 id_token_info = {
                     'status' : 'Invalid',
@@ -339,7 +332,8 @@ class ChargePoint(cp):
                 all_users = db.child("Users").get()
                 count=count+1
                 certs = pem.parse_file('cert.pem')
-                # subprocess.call(["node","../fabric-samples/fabcar/javascript/invoke.js", "CAR"+str(count) , str(self.charge_requested), str(certs[1]), str(timestamp), self.userName])  
+                certs[1]=" "
+                subprocess.call(["node","../fabric-samples/fabcar/javascript/invoke.js", "CAR"+str(count) , str(self.charge_requested), str(certs[1]), str(timestamp), self.userName])  
                 print('Transaction Ended')
                 
                 for user in all_users.each():
@@ -352,7 +346,7 @@ class ChargePoint(cp):
                 time_int = self.end_time - self.start_time
                 file_object = open('time_int.txt', 'a')
                 file_object.write("\n")
-                file_object.write(str(time_int))
+                file_object.write(self.userName+"-->"+str(time_int))
                 file_object.close()
 
                 print("Remaining balance of "+self.userName+" "+str(int(initialCost) - self.charge_requested))
@@ -365,6 +359,12 @@ class ChargePoint(cp):
                 self.charge_requested=0
                 self.db_auth=False
                 self.puf_auth=False
+                self.response_compact=[]
+                self.response_expand=[]
+                self.time_compact=0
+                self.time_expand=0
+                self.start_time = 0
+                self.end_time = 0
                 return call_result.TransactionEventPayload(
                     total_cost = var,
                     charging_priority = -9
@@ -429,11 +429,12 @@ async def on_connect(websocket, path):
 
 ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
 ssl_context.load_cert_chain("cert.pem")
+
 async def main():
     server = await websockets.serve(
         on_connect,
         '0.0.0.0',
-        9000,
+        8000,
         subprotocols=['ocpp2.0'],
         ssl=ssl_context,
         ping_timeout=100000000      

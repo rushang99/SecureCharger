@@ -20,7 +20,8 @@ balance=0
 message_id = 0
 prev_msg_done = True
 file=sys.argv[1]
-f = open("cars/"+file,'r')
+# f = open("cars/"+file,'r')
+f = open(file,'r')
 data = json.load(f)        
 model = data["Model"]
 vendorName = data["Vendor"]
@@ -149,7 +150,7 @@ class ChargePoint(cp):
             print("Cannot start transaction")
         elif response.charging_priority==-9:
             print("Charging finished worth-- "+str(response.total_cost))
-            sys.exit(0)
+            # sys.exit(0)
             
 
     async def send_reset(self,typee):
@@ -368,7 +369,7 @@ ssl_context.load_verify_locations("cert.pem")
 async def main(): 
     global name         
     async with websockets.connect(
-        'wss://localhost:9000/'+name,
+        'wss://localhost:8000/'+name,
             subprotocols=['ocpp2.0'],
             ssl=ssl_context,
             ping_interval = 7
@@ -382,8 +383,8 @@ async def main():
         global charge_req
         
 
-        await asyncio.gather(cp.start(),cp.send_boot_notification(model,vendorName,'PowerUp'),cp.send_authorize(name, 'Central'),cp.send_data_transfer("Request Challenge","Challenge"),cp.send_data_transfer(resp,"Challenge Sent"),cp.send_transaction_event('Started', 'Authorized', int(charge_req), 'Hello World'),cp.send_transaction_event('Ended', 'EVDeparted', 1234, 'Hello World'))
-
+        # await asyncio.gather(cp.start(),cp.send_boot_notification(model,vendorName,'PowerUp'),cp.send_authorize(name, 'Central'),cp.send_data_transfer("Request Challenge","Challenge"),cp.send_data_transfer(resp,"Challenge Sent"),cp.send_transaction_event('Started', 'Authorized', int(charge_req), 'Hello World'),cp.send_transaction_event('Ended', 'EVDeparted', 1234, 'Hello World'))
+        await asyncio.gather(cp.start(),cp.send_authorize(name,'Central'))
 
 if __name__ == '__main__':         
     asyncio.run(main())
