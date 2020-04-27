@@ -69,11 +69,10 @@ def help_authorize(name):
 
 
 
-def help_transaction_end(userName,initialCost,charge_requested,cert):
-    global count
+def help_transaction_end(userName,initialCost,charge_requested,cert,count):
+    # global count
     all_users = db.child("Users").get()
-    count=count+1
-    # subprocess.call(["node","../fabric-samples/fabcar/javascript/invoke.js", "CAR"+str(count) , str(charge_requested), str(cert), str(time.time()), userName])  
+    subprocess.call(["node","../fabric-samples/fabcar/javascript/invoke.js", "CAR"+str(count) , str(charge_requested), str(cert), str(time.time()), userName])  
     print('Transaction Ended')
     db.child("Users").child(userName).set({"chargingCost":str(int(initialCost) - charge_requested), "userLock" : False})      
 
@@ -251,10 +250,11 @@ class ChargePoint(cp):
         elif event_type=='Ended':
             if self.start_transaction:
                 global count
+                count=count+1
                 certs = pem.parse_file('cert.pem')
                 certs[1]=" "
                 with concurrent.futures.ProcessPoolExecutor() as pool:
-                    fn=functools.partial(help_transaction_end,self.userName,self.cost,self.charge_requested,certs[1])
+                    fn=functools.partial(help_transaction_end,self.userName,self.cost,self.charge_requested,certs[1],count)
                     status1 = await asyncio.get_running_loop().run_in_executor(pool, fn)
                 
                 
