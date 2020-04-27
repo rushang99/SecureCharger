@@ -1,3 +1,6 @@
 from subprocess import call 
-for i in range(0, 10):
-    call(['gnome-terminal', '-e', "python3 ocpp_client.py car" + str(i)+ ".json"])
+from subprocess import Popen
+for i in range(0, 20):
+    # call(["python", "ocpp_client.py", "car" + str(i)+ ".json"])
+    # call(['gnome-terminal', '-e', "python ocpp_client.py car" + str(i) +".json"])
+    Popen(["python", "ocpp_client.py", "car" + str(i)+ ".json"])
