@@ -88,7 +88,7 @@ class ChargePoint(cp):
             # print(lockAcquired)
             if lockAcquired:
                 # print("The user is already Authorized elsewhere. Please wait and try again later!!!")  
-                return call_result.AuthorizePayload(
+                return call_result.AuthorizePayload(q   
                     id_token_info = {
                         'status' : 'NotAtThisLocation',
                         # 'cacheExpiryDateTime'
