@@ -20,7 +20,8 @@ balance=0
 message_id = 0
 prev_msg_done = True
 file=sys.argv[1]
-f = open("cars/"+file,'r')
+# f = open("cars/"+file,'r')
+f = open(file,'r')
 data = json.load(f)        
 model = data["Model"]
 vendorName = data["Vendor"]
@@ -148,8 +149,8 @@ class ChargePoint(cp):
         # elif response.charging_priority==0:
         #     print("Cannot start transaction")
         elif response.charging_priority==-9:
-            # print("Charging finished worth-- "+str(response.total_cost))
-            print("Done")
+            print("Charging finished worth-- "+str(response.total_cost))
+            # sys.exit(0)
             
 
     async def send_reset(self,typee):
@@ -368,7 +369,7 @@ ssl_context.load_verify_locations("cert.pem")
 async def main(): 
     global name         
     async with websockets.connect(
-        'wss://localhost:9000/'+name,
+        'wss://localhost:8000/'+name,
             subprotocols=['ocpp2.0'],
             ssl=ssl_context,
             ping_interval = 7

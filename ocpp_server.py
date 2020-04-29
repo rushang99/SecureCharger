@@ -88,7 +88,7 @@ class ChargePoint(cp):
             # print(lockAcquired)
             if lockAcquired:
                 # print("The user is already Authorized elsewhere. Please wait and try again later!!!")  
-                return call_result.AuthorizePayload(q   
+                return call_result.AuthorizePayload(
                     id_token_info = {
                         'status' : 'NotAtThisLocation',
                         # 'cacheExpiryDateTime'
@@ -353,7 +353,7 @@ class ChargePoint(cp):
                 count=count+1
                 certs = pem.parse_file('cert.pem')
                 hyp_start = time.time()
-                # subprocess.call(["node","../../hypledger/fabric-samples/fabcar/javascript/invoke.js", "CAR"+str(count) , str(self.charge_requested), str(certs[1]), str(timestamp), self.userName]) 
+                subprocess.call(["node","../../hypledger/fabric-samples/fabcar/javascript/invoke.js", "CAR"+str(count) , str(self.charge_requested), str(certs[1]), str(timestamp), self.userName]) 
                 hyp_end = time.time() 
                 file_object = open('hyp_int.txt', 'a')
                 file_object.write("\n")

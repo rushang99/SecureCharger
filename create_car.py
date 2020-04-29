@@ -26,9 +26,9 @@ db = firebase.database()
 for i in range(0, num_cars):
     amount  = random.randint(100, 500)
     letters = string.ascii_letters
-    Model = ''.join(random.choice(letters) for i in range(random.randint(1,9)))
+    Model = ''.join(random.choice(letters) for i in range(random.randint(2,10)))
     Vendor = ''.join(random.choice(letters) for i in range(random.randint(1,9)))
-    Id = ''.join(random.choice(letters) for i in range(random.randint(1,9)))
+    Id = ''.join(random.choice(letters) for i in range(random.randint(2,10)))
     db.child("Users").child(Id).set({"chargingCost":str(amount*15), "userLock" : False}) 
 
     # Data to be written
