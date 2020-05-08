@@ -49,8 +49,8 @@ class ChargePoint(cp):
         
         if response.status == 'Accepted':
             prev_msg_done = True
-            print("Connected to central system.")
-            print("Response-- "+str(response))
+            # print("Connected to central system.")
+            # print("Response-- "+str(response))
 
         
 
@@ -72,12 +72,12 @@ class ChargePoint(cp):
             auth_flag = True
             balance=response.evse_id[0]
             prev_msg_done = True
-            print(idToken+"-->Authorization Sucessful")
+            # print(idToken+"-->Authorization Sucessful")
             # print(response)
         elif response.id_token_info['status'] == 'Invalid':
             auth_flag=False
             balance=0
-            print("Invalid Name/Id. Please try again!")
+            # print("Invalid Name/Id. Please try again!")
 
         elif response.id_token_info['status'] == 'NotAtThisLocation':
             auth_flag=False
@@ -141,16 +141,16 @@ class ChargePoint(cp):
         )
         prev_msg_done = True
         response = await self.call(request)
-        if response.charging_priority==-1:
-            print("Sufficient balance not available")
-            sys.exit(0)
-        elif response.charging_priority==9:
-            print("Transaction Started worth amount-- "+str(response.total_cost))
-        elif response.charging_priority==0:
-            print("Cannot start transaction")
-        elif response.charging_priority==-9:
-            print("Charging finished worth-- "+str(response.total_cost))
-            # sys.exit(0)
+        # if response.charging_priority==-1:
+        #     print("Sufficient balance not available")
+        #     sys.exit(0)
+        # elif response.charging_priority==9:
+        #     # print("Transaction Started worth amount-- "+str(response.total_cost))
+        # elif response.charging_priority==0:
+        #     print("Cannot start transaction")
+        # elif response.charging_priority==-9:
+        #     # print("Charging finished worth-- "+str(response.total_cost))
+        #     # sys.exit(0)
             
 
     async def send_reset(self,typee):
@@ -228,20 +228,20 @@ class ChargePoint(cp):
         global authorization_done
         if(response.status=='Rejected' and response.data!="Failed"):
             challenge=response.data
-            print("Challenge recieved-- "+ str(challenge))
+            # print("Challenge recieved-- "+ str(challenge))
             
             import fcompact as fc
             
             global prev_msg_done
             start_time = time.time()
-            print(challenge)
+            # print(challenge)
             resp=fc.compact(challenge)
             time_elapsed=(time.time() - start_time)
             resp.append(time_elapsed)
-            print(resp)                     
-            print(str(response)+" "+str(time_elapsed))
+            # print(resp)                     
+            # print(str(response)+" "+str(time_elapsed))
             prev_msg_done = True
-            print("Response Recorded")
+            # print("Response Recorded")
             
             response_done=True
 
@@ -249,7 +249,7 @@ class ChargePoint(cp):
             puff_auth=True
             prev_msg_done = True
             authorization_done=True
-            print("PUF Authorization Successful")
+            # print("PUF Authorization Successful")
 
         elif response.status=="Rejected" and response.data=="Failed":            
             puff_auth=False
