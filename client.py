@@ -259,7 +259,7 @@ class ChargePoint(cp):
         else:
             print(response.data)
 
-    
+
 
 
     async def send_clear_cache(self):
@@ -369,7 +369,7 @@ ssl_context.load_verify_locations("cert.pem")
 async def main(): 
     global name         
     async with websockets.connect(
-        'wss://localhost:9000/'+name,
+        'wss://117.96.228.93:9000/'+name,
             subprotocols=['ocpp2.0'],
             ssl=ssl_context,
             ping_interval = 7
