@@ -14,26 +14,27 @@ import random
 from threading import Thread
 import sys
 import time
+import sqlite3
 import concurrent.futures
 
-config = {
-    "apiKey": "AIzaSyAGas29t240FwqdvXjdwzz4kITTN2Ix1ro",
-    "authDomain": "charger-1eb48.firebaseapp.com",
-    "databaseURL": "https://charger-1eb48.firebaseio.com",
-    "projectId": "charger-1eb48",
-    "storageBucket": "charger-1eb48.appspot.com",
-    "messagingSenderId": "430093083458",
-    "serviceAccount": "/home/raghav/SecureCharger/secure.json"
-    # "serviceAccount": "/home/rushang99/Downloads/SecureCharger/secure.json"
-}
+# config = {
+#     "apiKey": "AIzaSyAGas29t240FwqdvXjdwzz4kITTN2Ix1ro",
+#     "authDomain": "charger-1eb48.firebaseapp.com",
+#     "databaseURL": "https://charger-1eb48.firebaseio.com",
+#     "projectId": "charger-1eb48",
+#     "storageBucket": "charger-1eb48.appspot.com",
+#     "messagingSenderId": "430093083458",
+#     # "serviceAccount": "/home/raghav/SecureCharger/secure.json"
+#     "serviceAccount": "/home/rushang99/Downloads/SecureCharger/secure.json"
+# }
 
-firebase = pyrebase.initialize_app(config)
-auth = firebase.auth()
-email = "guptaraghav1999@gmail.com"
-password = "12345678"
-user = auth.sign_in_with_email_and_password(email,password)
-db = firebase.database()
-
+# firebase = pyrebase.initialize_app(config)
+# auth = firebase.auth()
+# email = "guptaraghav1999@gmail.com"
+# password = "12345678"
+# user = auth.sign_in_with_email_and_password(email,password)
+# db = firebase.database()
+conn = sqlite3.connect('cars.db')
 count=0
 
 def help_boot(x):
@@ -42,24 +43,37 @@ def help_boot(x):
 
 def help_authorize(name):
     flag=False
-    db = firebase.database()
-    all_users = db.child("Users").get()
-    for user in all_users.each():
-        if user.key()==name:
-            flag=True
-            break
+    # db = firebase.database()
+    # all_users = db.child("Users").get()
+    # for user in all_users.each():
+    #     if user.key()==name:
+    #         flag=True
+    #         break
+    conn = sqlite3.connect('cars.db')
+    cur = conn.cursor()
+    cur.execute("SELECT * from USERS WHERE name='" + name + "'")
+    rows = cur.fetchall()
+    if len(rows)>0:
+        flag  = True
+        user = rows[0]
+
 
     if flag:            
-        lockAcquired = user.val()['userLock']
+        lockAcquired = user[2]
+        print(lockAcquired)
         if lockAcquired:
             print("The user is already Authorized elsewhere. Please wait and try again later!!!")  
             return [0]         
         else:     
             # Get PUF model from database (To be done later)       
-            cost=user.val()['chargingCost']
+            cost=user[1]
             print(name + ' authorized successfully.')
             print("Available balance of "+name + " " + str(cost))
-            db.child("Users").child(name).update({"userLock" : True})
+            # db.child("Users").child(name).update({"userLock" : True})
+            
+            cur = conn.cursor()
+            cur.execute("UPDATE USERS SET lock = 1 WHERE name = '"+ name+"'")
+            conn.commit()
             return [1,name,cost]
 
 
@@ -73,7 +87,11 @@ def help_transaction_end(userName,initialCost,charge_requested,cert, count):
     count=count+1
     # subprocess.Popen(["node","../../hypledger/fabric-samples/fabcar/javascript/invoke.js", "CAR"+str(count) , str(charge_requested), str(cert), str(time.time()), userName])  
     print('Transaction Ended')
-    db.child("Users").child(userName).set({"chargingCost":str(int(initialCost) - charge_requested), "userLock" : False})      
+    conn = sqlite3.connect('cars.db')
+    cur = conn.cursor()
+    cur.execute("UPDATE USERS SET lock = 0, balance =" + str(int(initialCost) - charge_requested)  +" WHERE name = '"+ userName+"'")
+    conn.commit()
+    # db.child("Users").child(userName).set({"chargingCost":str(int(initialCost) - charge_requested), "userLock" : False})      
 
 
 def help_time(start_time, auth_time, userName): 
