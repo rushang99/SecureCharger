@@ -71,7 +71,7 @@ def help_authorize(name):
 
 def help_transaction_end(userName,initialCost,charge_requested,cert, count):
     count=count+1
-    subprocess.Popen(["node","../../hypledger/fabric-samples/fabcar/javascript/invoke.js", "CAR"+str(count) , str(charge_requested), str(cert), str(time.time()), userName])  
+    # subprocess.Popen(["node","../../hypledger/fabric-samples/fabcar/javascript/invoke.js", "CAR"+str(count) , str(charge_requested), str(cert), str(time.time()), userName])  
     print('Transaction Ended')
     db.child("Users").child(userName).set({"chargingCost":str(int(initialCost) - charge_requested), "userLock" : False})      
 
