@@ -23,8 +23,8 @@ config = {
     "projectId": "charger-1eb48",
     "storageBucket": "charger-1eb48.appspot.com",
     "messagingSenderId": "430093083458",
-    # "serviceAccount": "/home/raghav/SecureCharger/secure.json"
-    "serviceAccount": "/home/rushang99/Downloads/SecureCharger/secure.json"
+    "serviceAccount": "/home/raghav/SecureCharger/secure.json"
+    # "serviceAccount": "/home/rushang99/Downloads/SecureCharger/secure.json"
 }
 
 firebase = pyrebase.initialize_app(config)
@@ -57,8 +57,8 @@ def help_authorize(name):
         else:     
             # Get PUF model from database (To be done later)       
             cost=user.val()['chargingCost']
-            # print(name + ' authorized successfully.')
-            # print("Available balance of "+name + " " + str(cost))
+            print(name + ' authorized successfully.')
+            print("Available balance of "+name + " " + str(cost))
             db.child("Users").child(name).update({"userLock" : True})
             return [1,name,cost]
 
@@ -106,7 +106,7 @@ class ChargePoint(cp):
     @on('BootNotification')
     async def on_boot_notitication(self, charging_station, reason, **kwargs):
         self.start_time = time.time()
-        # print(charging_station['model'] + ' from ' + charging_station['vendor_name'] + ' has booted.')       
+        print(charging_station['model'] + ' from ' + charging_station['vendor_name'] + ' has booted.')       
         return call_result.BootNotificationPayload(
             current_time=datetime.utcnow().isoformat(),
             interval=10,
@@ -166,7 +166,7 @@ class ChargePoint(cp):
                 self.challenge=[0,0,0,0,0,0,0,0,0,0,0,0]
                 for i in range(len(bn)):
                     self.challenge[12-len(bn)+i]=(ord(bn[i])-ord('0'))
-                # print(self.userName+"--> Challenge Generated-- " + str(self.challenge))
+                print(self.userName+"--> Challenge Generated-- " + str(self.challenge))
                 #Request model from database and validate user
                 import fexpand as fe
                 start_time = time.time()
@@ -178,25 +178,23 @@ class ChargePoint(cp):
                     data=self.challenge
                 )
             elif(str(vendor_id)=="Challenge Sent"):
-                # print(self.userName+"--> Response recorded--"+str(self.challenge))    
+                print(self.userName+"--> Response recorded--"+str(self.challenge))    
                 self.response_compact=data[:4]
                 self.time_compact=data[4]
                 # if (time_compact < time_expand) and time_compact<1e-4  and time_expand > 1e-5 and response_compact==response_expand:
                 if self.response_compact==self.response_expand:
-                    # print(time_expand - time_compact)
-                    # print("time_expand--"+str(self.time_expand))
-                    # print("time_compact--"+str(self.time_compact))
-                    # print(self.userName+"--> PUF authorization successful--"+str(self.challenge))
+                    print("time_expand--"+str(self.time_expand))
+                    print("time_compact--"+str(self.time_compact))
+                    print(self.userName+"--> PUF authorization successful--"+str(self.challenge))
                     self.puf_auth=True
                     return call_result.DataTransferPayload(
                         status = 'Accepted',
                         data="Done"
                     )
                 else:
-                    # print(time_expand - time_compact)
-                    # print("time_expand--"+str(self.time_expand))
-                    # print("time_compact--"+str(self.time_compact))
-                    # print(self.userName+"--> PUF authorization unsuccessful--"+str(self.challenge))
+                    print("time_expand--"+str(self.time_expand))
+                    print("time_compact--"+str(self.time_compact))
+                    print(self.userName+"--> PUF authorization unsuccessful--"+str(self.challenge))
                     db.child("Users").child(self.userName).update({"userLock" : False})
                     self.puf_auth=False
                     return call_result.DataTransferPayload(
@@ -218,7 +216,7 @@ class ChargePoint(cp):
         if event_type=='Started' and self.db_auth and self.puf_auth and int(self.cost)>=charge_req:
             self.charge_requested = charge_req 
             self.start_transaction=True
-            # print("Starting Transaction")
+            print("Starting Transaction")
             return call_result.TransactionEventPayload(
                 total_cost = charge_req,
                 charging_priority = 9
@@ -255,7 +253,7 @@ class ChargePoint(cp):
                     status2 = await asyncio.get_running_loop().run_in_executor(pool, fn)
 
 
-                # print("Remaining balance of "+self.userName+" "+str(int(self.cost) - self.charge_requested))
+                print("Remaining balance of "+self.userName+" "+str(int(self.cost) - self.charge_requested))
                 self.cost='0'
                 self.start_transaction=False
                 self.userName=''
@@ -277,7 +275,7 @@ class ChargePoint(cp):
                 )
 
             else:
-                # print("Error! Transaction didn't start.")
+                print("Error! Transaction didn't start.")
                 db.child("Users").child(self.userName).update({"userLock" : False})
                 self.cost='0'
                 self.start_transaction=False
