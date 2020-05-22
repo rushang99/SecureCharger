@@ -123,7 +123,8 @@ class ChargePoint(cp):
 
     @on('BootNotification')
     async def on_boot_notitication(self, charging_station, reason, **kwargs):
-        # print(charging_station['model'] + ' from ' + charging_station['vendor_name'] + ' has booted.')       
+        # print(charging_station['model'] + ' from ' + charging_station['vendor_name'] + ' has booted.')  
+        self.start_time = time.time()     
         return call_result.BootNotificationPayload(
             current_time=datetime.utcnow().isoformat(),
             interval=10,
@@ -317,7 +318,6 @@ async def on_connect(websocket, path):
     """
     charge_point_id = path.strip('/')
     cp = ChargePoint(charge_point_id, websocket)
-    cp.start_time = time.time()
     await cp.start()
     
 
@@ -325,16 +325,19 @@ ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
 ssl_context.load_cert_chain("cert.pem")
 
 async def main():
-    server = await websockets.serve(
-        on_connect,
-        '0.0.0.0',
-        9000,
-        subprotocols=['ocpp2.0'],
-        ssl=ssl_context,
-        ping_timeout=100000000      
-    )
+    try:
+        server = await websockets.serve(
+            on_connect,
+            '0.0.0.0',
+            9000,
+            subprotocols=['ocpp2.0'],
+            ssl=ssl_context,
+            ping_timeout=100000000      
+        )
 
-    await server.wait_closed()
+        await server.wait_closed()
+    except Exception:
+        print("Exception")
 
 if __name__ == '__main__':
     asyncio.run(main())

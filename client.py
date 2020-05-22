@@ -108,7 +108,7 @@ class ChargePoint(cp):
             print("Cannot start transaction")
         elif response.charging_priority==-9:
             print("Charging finished worth-- "+str(response.total_cost))
-            # sys.exit(0)
+            # await self._connection.close()
             
 
 
@@ -194,39 +194,42 @@ ssl_context.load_verify_locations("cert.pem")
 
 
 async def main(): 
-    global name         
-    async with websockets.connect(
-        'wss://localhost:9000/CP_1',
-            subprotocols=['ocpp2.0'],
-            ssl=ssl_context,
-            ping_interval = 7
-    ) as ws:        
-        cp = ChargePoint('CP_1', ws)
-        global resp
-        global message_id
-        global prev_msg_done
-        global model
-        global vendorName
-        global charge_req
+    global name   
+    try:      
+        async with websockets.connect(
+            'wss://localhost:9000/CP_1',
+                subprotocols=['ocpp2.0'],
+                ssl=ssl_context,
+                ping_interval = 7
+        ) as ws:        
+            cp = ChargePoint('CP_1', ws)
+            global resp
+            global message_id
+            global prev_msg_done
+            global model
+            global vendorName
+            global charge_req
 
-        uri = "ws://localhost:8765"
-        async with websockets.connect(uri) as websocket:
-            send = file
+            uri = "ws://localhost:8765"
+            async with websockets.connect(uri) as websocket:
+                send = file
 
-            await websocket.send(send)
-            # print(f"> {name}")
+                await websocket.send(send)
+                # print(f"> {name}")
 
-            rec = await websocket.recv()
-            data=eval(rec)
-            # print(f"< {rec}")  
-            model = data["Model"]
-            vendorName = data["Vendor"]
-            reason = 'PowerUp'      
-            name = data["Id"]
-            charge_req=data["Amount"]
-        
-        await asyncio.gather(cp.start(),cp.send_boot_notification(model,vendorName,'PowerUp'),cp.send_authorize(name, 'Central'),cp.send_data_transfer("Request Challenge","Challenge"),cp.send_data_transfer(resp,"Challenge Sent"),cp.send_transaction_event('Started', 'Authorized', int(charge_req), 'Hello World'),cp.send_transaction_event('Ended', 'EVDeparted', 1234, 'Hello World'))
-        # await asyncio.gather(cp.start(),cp.send_boot_notification(model,vendorName,'PowerUp'))
+                rec = await websocket.recv()
+                data=eval(rec)
+                # print(f"< {rec}")  
+                model = data["Model"]
+                vendorName = data["Vendor"]
+                reason = 'PowerUp'      
+                name = data["Id"]
+                charge_req=data["Amount"]
+            
+            await asyncio.gather(cp.start(),cp.send_boot_notification(model,vendorName,'PowerUp'),cp.send_authorize(name, 'Central'),cp.send_data_transfer("Request Challenge","Challenge"),cp.send_data_transfer(resp,"Challenge Sent"),cp.send_transaction_event('Started', 'Authorized', int(charge_req), 'Hello World'),cp.send_transaction_event('Ended', 'EVDeparted', 1234, 'Hello World'), cp._connection.close())
+            # await asyncio.gather(cp.start(),cp.send_boot_notification(model,vendorName,'PowerUp'))
+    except Exception:
+        print("Exception")
 
 
 if __name__ == '__main__':         
