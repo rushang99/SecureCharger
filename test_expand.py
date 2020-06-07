@@ -3,7 +3,7 @@ import time
 import sys
 import ast
 from myhdl import *
-from fcompact_hdl import fexpand
+from fexpand_hdl import fexpand
 
 @block
 def test_mux(arr):
