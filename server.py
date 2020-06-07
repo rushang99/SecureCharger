@@ -186,10 +186,18 @@ class ChargePoint(cp):
                     self.challenge[12-len(bn)+i]=(ord(bn[i])-ord('0'))
                 print(self.userName+"--> Challenge Generated-- " + str(self.challenge))
                 #Request model from database and validate user
-                import fexpand as fe
-                start_time = time.time()
-                self.response_expand=fe.expand(self.challenge)
-                self.time_expand=(time.time() - start_time)
+                # import fexpand as fe
+                # start_time = time.time()
+                # self.response_expand=fe.expand(self.challenge)
+                # self.time_expand=(time.time() - start_time)
+
+                output=subprocess.Popen( ['python3', 'test_expand.py', str(challenge)], stdout=subprocess.PIPE ).communicate()[0]
+                arr=str(output).split("\\n")
+                response=arr[1].split()[:4]
+                for i in range(4):
+                    response[i]=int(response[i])
+                self.response_expand=response
+                self.time_expand=float(arr[2])
 
                 return call_result.DataTransferPayload(
                     status = 'Rejected',
@@ -318,8 +326,9 @@ async def on_connect(websocket, path):
     """
     charge_point_id = path.strip('/')
     cp = ChargePoint(charge_point_id, websocket)
-
+    
     await cp.start()
+    
     
 
 ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
