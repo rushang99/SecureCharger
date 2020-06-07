@@ -60,15 +60,15 @@ def help_authorize(name):
 
     if flag:            
         lockAcquired = user[2]
-        print(lockAcquired)
+        # print(lockAcquired)
         if lockAcquired:
             print("The user is already Authorized elsewhere. Please wait and try again later!!!")  
             return [0]         
         else:     
             # Get PUF model from database (To be done later)       
             cost=user[1]
-            print(name + ' authorized successfully.')
-            print("Available balance of "+name + " " + str(cost))
+            # print(name + ' authorized successfully.')
+            # print("Available balance of "+name + " " + str(cost))
             # db.child("Users").child(name).update({"userLock" : True})
             
             cur = conn.cursor()
@@ -78,14 +78,14 @@ def help_authorize(name):
 
 
     else:
-        print(name + ' not found in database.')
+        # print(name + ' not found in database.')
         return [-1]   
 
 
 
 def help_transaction_end(userName,initialCost,charge_requested,cert, count):
     count=count+1
-    # subprocess.Popen(["node","../../hypledger/fabric-samples/fabcar/javascript/invoke.js", "CAR"+str(count) , str(charge_requested), str(cert), str(time.time()), userName])  
+    subprocess.Popen(["node","../../hypledger/fabric-samples/fabcar/javascript/invoke.js", "CAR"+str(count) , str(charge_requested), str(cert), str(time.time()), userName])  
     print('Transaction Ended')
     conn = sqlite3.connect('cars.db')
     cur = conn.cursor()
@@ -123,8 +123,8 @@ class ChargePoint(cp):
 
     @on('BootNotification')
     async def on_boot_notitication(self, charging_station, reason, **kwargs):
-        self.start_time = time.time()
-        print(charging_station['model'] + ' from ' + charging_station['vendor_name'] + ' has booted.')       
+        # print(charging_station['model'] + ' from ' + charging_station['vendor_name'] + ' has booted.')  
+        self.start_time = time.time()     
         return call_result.BootNotificationPayload(
             current_time=datetime.utcnow().isoformat(),
             interval=10,
@@ -184,7 +184,7 @@ class ChargePoint(cp):
                 self.challenge=[0,0,0,0,0,0,0,0,0,0,0,0]
                 for i in range(len(bn)):
                     self.challenge[12-len(bn)+i]=(ord(bn[i])-ord('0'))
-                print(self.userName+"--> Challenge Generated-- " + str(self.challenge))
+                # print(self.userName+"--> Challenge Generated-- " + str(self.challenge))
                 #Request model from database and validate user
                 # import fexpand as fe
                 # start_time = time.time()
@@ -204,24 +204,24 @@ class ChargePoint(cp):
                     data=self.challenge
                 )
             elif(str(vendor_id)=="Challenge Sent"):
-                print(self.userName+"--> Response recorded--"+str(self.challenge))    
+                # print(self.userName+"--> Response recorded--"+str(self.challenge))    
                 self.response_compact=data[:4]
                 self.time_compact=data[4]
                 # if (time_compact < time_expand) and time_compact<1e-4  and time_expand > 1e-5 and response_compact==response_expand:
                 if self.response_compact==self.response_expand:
-                    print("time_expand--"+str(self.time_expand))
-                    print("time_compact--"+str(self.time_compact))
-                    print(self.userName+"--> PUF authorization successful--"+str(self.challenge))
+                    # print("time_expand--"+str(self.time_expand))
+                    # print("time_compact--"+str(self.time_compact))
+                    # print(self.userName+"--> PUF authorization successful--"+str(self.challenge))
                     self.puf_auth=True
                     return call_result.DataTransferPayload(
                         status = 'Accepted',
                         data="Done"
                     )
                 else:
-                    print("time_expand--"+str(self.time_expand))
-                    print("time_compact--"+str(self.time_compact))
-                    print(self.userName+"--> PUF authorization unsuccessful--"+str(self.challenge))
-                    db.child("Users").child(self.userName).update({"userLock" : False})
+                    # print("time_expand--"+str(self.time_expand))
+                    # print("time_compact--"+str(self.time_compact))
+                    # print(self.userName+"--> PUF authorization unsuccessful--"+str(self.challenge))
+                    # db.child("Users").child(self.userName).update({"userLock" : False})
                     self.puf_auth=False
                     return call_result.DataTransferPayload(
                         status = 'Rejected',
@@ -229,7 +229,7 @@ class ChargePoint(cp):
                     )                
 
         else:
-            print("Database not authorized.")
+            # print("Database not authorized.")
             self.puf_auth=False
             return call_result.DataTransferPayload(
                     status = 'Rejected',
@@ -242,13 +242,13 @@ class ChargePoint(cp):
         if event_type=='Started' and self.db_auth and self.puf_auth and int(self.cost)>=charge_req:
             self.charge_requested = charge_req 
             self.start_transaction=True
-            print("Starting Transaction")
+            # print("Starting Transaction")
             return call_result.TransactionEventPayload(
                 total_cost = charge_req,
                 charging_priority = 9
             ) 
         elif event_type=='Started' and self.db_auth and self.puf_auth:
-            print("Insufficient balance. Cannot start transaction")
+            # print("Insufficient balance. Cannot start transaction")
             self.start_transaction=False
             return call_result.TransactionEventPayload(
                 total_cost = 0,
@@ -256,7 +256,7 @@ class ChargePoint(cp):
             ) 
 
         elif event_type=='Started':
-            print("Authorization was unsuccessful. Cannot start transaction")
+            # print("Authorization was unsuccessful. Cannot start transaction")
             self.start_transaction=False
             return call_result.TransactionEventPayload(
                 total_cost = 0,
@@ -279,7 +279,7 @@ class ChargePoint(cp):
                     status2 = await asyncio.get_running_loop().run_in_executor(pool, fn)
 
 
-                print("Remaining balance of "+self.userName+" "+str(int(self.cost) - self.charge_requested))
+                # print("Remaining balance of "+self.userName+" "+str(int(self.cost) - self.charge_requested))
                 self.cost='0'
                 self.start_transaction=False
                 self.userName=''
@@ -301,8 +301,8 @@ class ChargePoint(cp):
                 )
 
             else:
-                print("Error! Transaction didn't start.")
-                db.child("Users").child(self.userName).update({"userLock" : False})
+                # print("Error! Transaction didn't start.")
+                # db.child("Users").child(self.userName).update({"userLock" : False})
                 self.cost='0'
                 self.start_transaction=False
                 self.userName=''
@@ -326,7 +326,6 @@ async def on_connect(websocket, path):
     """
     charge_point_id = path.strip('/')
     cp = ChargePoint(charge_point_id, websocket)
-    
     await cp.start()
     
     
@@ -335,16 +334,19 @@ ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
 ssl_context.load_cert_chain("cert.pem")
 
 async def main():
-    server = await websockets.serve(
-        on_connect,
-        '0.0.0.0',
-        9000,
-        subprotocols=['ocpp2.0'],
-        ssl=ssl_context,
-        ping_timeout=100000000      
-    )
+    try:
+        server = await websockets.serve(
+            on_connect,
+            '0.0.0.0',
+            9000,
+            subprotocols=['ocpp2.0'],
+            ssl=ssl_context,
+            ping_timeout=100000000      
+        )
 
-    await server.wait_closed()
+        await server.wait_closed()
+    except Exception:
+        print("Exception")
 
 if __name__ == '__main__':
     asyncio.run(main())

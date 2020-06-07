@@ -7,9 +7,9 @@ import json
 num_cars = int(sys.argv[1])
 conn = sqlite3.connect('cars.db')
 conn.execute('''CREATE TABLE USERS
-         (NAME          TEXT  PRIMARY KEY  NOT NULL,
-         BALANCE            INT     NOT NULL,
-         LOCK        INT NOT NULL);''')
+          (NAME          TEXT  PRIMARY KEY  NOT NULL,
+          BALANCE            INT     NOT NULL,
+          LOCK        INT NOT NULL);''')
 
 for i in range(0, num_cars):
     amount  = random.randint(100, 500)
