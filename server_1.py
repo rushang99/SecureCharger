@@ -16,7 +16,7 @@ import sys
 import time
 import sqlite3
 import concurrent.futures
-import docker
+import docker 
 
 # config = {
 #     "apiKey": "AIzaSyAGas29t240FwqdvXjdwzz4kITTN2Ix1ro",
@@ -36,7 +36,7 @@ import docker
 # user = auth.sign_in_with_email_and_password(email,password)
 # db = firebase.database()
 conn = sqlite3.connect('cars.db')
-count=0
+count=3
 
 def help_boot(x):
     time.sleep(x)
@@ -86,7 +86,13 @@ def help_authorize(name):
 
 def help_transaction_end(userName,initialCost,charge_requested,cert, count):
     count=count+1
-    # subprocess.Popen(["../../hypledger/fabric-samples/fabcar/javascript/invoke.js", "CAR"+str(count) , str(charge_requested), str(cert), str(time.time()), userName])  
+    
+    # subprocess.Popen(["node","/home/adeeb/Documents/mtech/miniproject/hyperledger/fabric-samples/fabcar/javascript/invoke.js", "CAR"+str(count) , str(charge_requested), str(cert), str(time.time()), userName])  
+    # client = docker.from_env()
+    # cli = client.containers.get('cli')
+    # print("peer chaincode invoke -o orderer.example.com:7050 --tls true --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C mychannel -n mycc --peerAddresses peer0.org1.example.com:7051 --tlsRootCertFiles /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt --peerAddresses peer0.org2.example.com:9051 --tlsRootCertFiles /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt -c '{"+'"function":"CreateCar","Args":["CAR'+str(count)+'","Raghav","roadster","sdfa","abcd123","sjdf"]}'+"'")
+    # cli.exec_run("peer chaincode invoke -o orderer.example.com:7050 --tls true --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C mychannel -n mycc --peerAddresses peer0.org1.example.com:7051 --tlsRootCertFiles /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt --peerAddresses peer0.org2.example.com:9051 --tlsRootCertFiles /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt -c '{"+'"function":"CreateCar","Args":["CAR'+str(count)+'","Raghav","roadster","sdfa","abcd123","sjdf"]}'+"'")
+    subprocess.Popen(["python", "hyp_test.py", str(count)])
     print('Transaction Ended')
     conn = sqlite3.connect('cars.db')
     cur = conn.cursor()
@@ -124,8 +130,7 @@ class ChargePoint(cp):
 
     @on('BootNotification')
     async def on_boot_notitication(self, charging_station, reason, **kwargs):
-        # print(charging_station['model'] + ' from ' + charging_station['vendor_name'] + ' has booted.')  
-        self.start_time = time.time()     
+        # print(charging_station['model'] + ' from ' + charging_station['vendor_name'] + ' has booted.')       
         return call_result.BootNotificationPayload(
             current_time=datetime.utcnow().isoformat(),
             interval=10,
@@ -319,6 +324,7 @@ async def on_connect(websocket, path):
     """
     charge_point_id = path.strip('/')
     cp = ChargePoint(charge_point_id, websocket)
+    cp.start_time = time.time()
     await cp.start()
     
 
@@ -326,19 +332,16 @@ ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
 ssl_context.load_cert_chain("cert.pem")
 
 async def main():
-    try:
-        server = await websockets.serve(
-            on_connect,
-            '0.0.0.0',
-            9000,
-            subprotocols=['ocpp2.0'],
-            ssl=ssl_context,
-            ping_timeout=100000000      
-        )
+    server = await websockets.serve(
+        on_connect,
+        '0.0.0.0',
+        2000,
+        subprotocols=['ocpp2.0'],
+        ssl=ssl_context,
+        ping_timeout=1000000000      
+    )
 
-        await server.wait_closed()
-    except Exception:
-        print("Exception")
+    await server.wait_closed()
 
 if __name__ == '__main__':
     asyncio.run(main())
