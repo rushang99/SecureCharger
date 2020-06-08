@@ -58,8 +58,8 @@ def compact(a):
 
 	# return ("--- %s seconds ---" % (time.time() - start_time),str(c))
 	return c
-
-
+brr=[2,2,2,2,2,2,2,2,2,2,2,2]
+print(compact(brr))
 
 
 
