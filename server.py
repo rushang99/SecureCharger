@@ -5,6 +5,7 @@ import functools
 from ocpp.routing import on
 from ocpp.v20 import ChargePoint as cp
 from ocpp.v20 import call_result
+from myhdl import *
 import pathlib
 import ssl
 import pyrebase
@@ -87,6 +88,7 @@ def help_authorize(name):
 def help_transaction_end(userName,initialCost,charge_requested,cert, count):
     count=count+1
     # subprocess.Popen(["../../hypledger/fabric-samples/fabcar/javascript/invoke.js", "CAR"+str(count) , str(charge_requested), str(cert), str(time.time()), userName])  
+    # subprocess.call(["python", "hyp_test.py", str(count)])
     print('Transaction Ended')
     conn = sqlite3.connect('cars.db')
     cur = conn.cursor()
@@ -192,7 +194,7 @@ class ChargePoint(cp):
                 # self.response_expand=fe.expand(self.challenge)
                 # self.time_expand=(time.time() - start_time)
 
-                output=subprocess.Popen( ['python3', 'test_expand.py', str(challenge)], stdout=subprocess.PIPE ).communicate()[0]
+                output=subprocess.Popen( ['python', 'test_expand.py', str(self.challenge)], stdout=subprocess.PIPE ).communicate()[0]
                 arr=str(output).split("\\n")
                 response=arr[1].split()[:4]
                 for i in range(4):

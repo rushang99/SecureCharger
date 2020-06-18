@@ -115,7 +115,7 @@ class ChargePoint(cp):
         # elif response.charging_priority==-9:
         if response.charging_priority==-9:
             print("Charging finished worth-- "+str(response.total_cost))
-            # await self._connection.close()
+            # sys.exit(0)
             
 
 
@@ -155,40 +155,41 @@ class ChargePoint(cp):
             challenge=response.data
             # print("Challenge recieved-- "+ str(challenge))
             
-            # import fcompact as fc           
-            # start_time = time.time()
-            # # uri = "ws://localhost:8765"
-            # # async with websockets.connect(uri) as websocket:
-            # #     send = str(challenge)
+            import fcompact as fc           
+            start_time = time.time()
+            # uri = "ws://localhost:8765"
+            # async with websockets.connect(uri) as websocket:
+            #     send = str(challenge)
 
-            # #     await websocket.send(send)
-            # #     # print(f"> {name}")
+            #     await websocket.send(send)
+            #     # print(f"> {name}")
 
-            # #     rec = await websocket.recv()
+            #     rec = await websocket.recv()
                  
-            # # resp=ast.literal_eval(rec)
-            # # time_elapsed=(time.time() - start_time)
-            # # resp.append(time_elapsed)
+            # resp=ast.literal_eval(rec)
+            # time_elapsed=(time.time() - start_time)
+            # resp.append(time_elapsed)
 
-            # # print(resp) 
+            # print(resp) 
 
             # resp=fc.compact(challenge)   
             # time_elapsed=(time.time() - start_time)
-            # resp.append(time_elapsed)              
-            # # print(str(response)+" "+str(time_elapsed))
-
-            # # print("Response Recorded")
-
+            # resp.append(time_elapsed)         
             output=subprocess.Popen( ['python3', 'test_compact.py', str(challenge)], stdout=subprocess.PIPE ).communicate()[0]
+            print(output)
             arr=str(output).split("\\n")
-            print(arr)
             resp=arr[1].split()[:4]
 
             for i in range(4):
                 resp[i]=int(resp[i])
 
-            time=float(arr[2])
-            resp.append(time)
+            time_taken=float(arr[2])
+            resp.append(time_taken)
+            
+            response_done=True     
+            # print(str(response)+" "+str(time_elapsed))
+
+            # print("Response Recorded")
             
             response_done=True
 
@@ -215,9 +216,9 @@ ssl_context.check_hostname = False
 ssl_context.verify_mode = ssl.CERT_NONE
 ssl_context.load_verify_locations("cert.pem")
 
+
 async def main(): 
-    global name   
-    # try:      
+    global name         
     async with websockets.connect(
         'wss://localhost:9000/CP_1',
             subprotocols=['ocpp2.0'],
@@ -234,24 +235,18 @@ async def main():
 
         # uri = "ws://localhost:8765"
         # async with websockets.connect(uri) as websocket:
-        #     send = file
+            # send = file
 
-        #     await websocket.send(send)
-        #     # print(f"> {name}")
+            # await websocket.send(send)
+            # # print(f"> {name}")
 
-        #     rec = await websocket.recv()
-        #     data=eval(rec)
-        #     # print(f"< {rec}")  
-        #     model = data["Model"]
-        #     vendorName = data["Vendor"]
-        #     reason = 'PowerUp'      
-        #     name = data["Id"]
-        #     charge_req=data["Amount"]
+            # rec = await websocket.recv()
+            # data=eval(rec)
+            # print(f"< {rec}") 
+
         
-        await asyncio.gather(cp.start(),cp.send_boot_notification(model,vendorName,'PowerUp'),cp.send_authorize(name, 'Central'),cp.send_data_transfer("Request Challenge","Challenge"),cp.send_data_transfer(resp,"Challenge Sent"),cp.send_transaction_event('Started', 'Authorized', int(charge_req), 'Hello World'),cp.send_transaction_event('Ended', 'EVDeparted', 1234, 'Hello World'), cp._connection.close())
+        await asyncio.gather(cp.start(),cp.send_boot_notification(model,vendorName,'PowerUp'),cp.send_authorize(name, 'Central'),cp.send_data_transfer("Request Challenge","Challenge"),cp.send_data_transfer(resp,"Challenge Sent"),cp.send_transaction_event('Started', 'Authorized', int(charge_req), 'Hello World'),cp.send_transaction_event('Ended', 'EVDeparted', 1234, 'Hello World'))
         # await asyncio.gather(cp.start(),cp.send_boot_notification(model,vendorName,'PowerUp'))
-    # except Exception:
-    #     print(Exception)
 
 
 if __name__ == '__main__':         
