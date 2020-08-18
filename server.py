@@ -88,7 +88,7 @@ def help_authorize(name):
 def help_transaction_end(userName,initialCost,charge_requested,cert, count):
     count=count+1
     # subprocess.Popen(["../../hypledger/fabric-samples/fabcar/javascript/invoke.js", "CAR"+str(count) , str(charge_requested), str(cert), str(time.time()), userName])  
-    # subprocess.call(["python", "hyp_test.py", str(count)])
+    subprocess.Popen(["python3", "hyp_test.py", str(count)])
     print('Transaction Ended')
     conn = sqlite3.connect('cars.db')
     cur = conn.cursor()
@@ -194,7 +194,7 @@ class ChargePoint(cp):
                 # self.response_expand=fe.expand(self.challenge)
                 # self.time_expand=(time.time() - start_time)
 
-                output=subprocess.Popen( ['python', 'test_expand.py', str(self.challenge)], stdout=subprocess.PIPE ).communicate()[0]
+                output=subprocess.Popen( ['python3', 'test_expand.py', str(self.challenge)], stdout=subprocess.PIPE ).communicate()[0]
                 arr=str(output).split("\\n")
                 response=arr[1].split()[:4]
                 for i in range(4):
@@ -344,7 +344,7 @@ async def main():
             9000,
             subprotocols=['ocpp2.0'],
             ssl=ssl_context,
-            ping_timeout=100000000      
+            ping_timeout=1000000000000      
         )
 
         await server.wait_closed()
