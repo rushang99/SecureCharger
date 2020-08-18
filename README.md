@@ -23,8 +23,8 @@ $ curl -sSL https://bit.ly/2ysbOFE | bash -s
 ```sh
 $ ./byfn.sh up -n
 ```
-4. Connect all the organizations to their respective channels and install chaincode by modifying and running [script.sh](Hyperledger Fabric/first-network/scripts/script.sh)
-5. Invoke and Query the chaincode using script.sh. Once they are successful, the hyperledger fabric is ready to be used.
+4. Connect all the organizations to their respective channels and install chaincode by modifying and running [script.sh](hyperledger_fabric/first-network/scripts/script.sh)
+5. Invoke and Query the chaincode using [script.sh](hyperledger_fabric/first-network/scripts/script.sh). Once they are successful, the hyperledger fabric is ready to be used.
 
 ## Steps to run the server client system
 1. To create multiple car profiles for simulation, run [create_car_firebase.py](create_car_firebase.py) (if using firebase) or [create_car_sql.py](create_car_sql.py) (if using local sql database) with argument being the number of cars.
@@ -43,4 +43,4 @@ $ python3 multi_clients.py
 
 [test_compact.py](test_compact.py) and [test_expand.py](test_expand.py) take a 12-bit challenge as a command line argument and generate a corresponding response using myHDL design of respective functions.
 
-
+[invoke.py](invoke.py) is used by the server to invoke a transaction in the fabric.
