@@ -22,3 +22,4 @@ $ python3 server.py
 ```sh
 $ python3 multi_clients.py
 ```
+[fcompact.py](fcompact.py) contains the python implemented fast version of PUF and [fexpand.py](fexpand.py) contains the slow version of PUF. 
