@@ -19,6 +19,8 @@ import sqlite3
 import concurrent.futures
 import docker
 
+'''  For online Firebase Database(Optional) '''
+
 # config = {
 #     "apiKey": "AIzaSyAGas29t240FwqdvXjdwzz4kITTN2Ix1ro",
 #     "authDomain": "charger-1eb48.firebaseapp.com",
@@ -29,14 +31,17 @@ import docker
 #     # "serviceAccount": "/home/raghav/SecureCharger/secure.json"
 #     "serviceAccount": "/home/rushang99/Downloads/SecureCharger/secure.json"
 # }
-
 # firebase = pyrebase.initialize_app(config)
 # auth = firebase.auth()
 # email = "guptaraghav1999@gmail.com"
 # password = "12345678"
 # user = auth.sign_in_with_email_and_password(email,password)
 # db = firebase.database()
+
+'''  SQL Databse initialiazation '''
 conn = sqlite3.connect('cars.db')
+
+'''  Helper functions for Multi-threading  '''
 count=0
 
 def help_boot(x):
@@ -106,6 +111,8 @@ def help_time(start_time, auth_time, userName):
     file_object.close()
 
 
+'''  ChargePoint class implementing OCPP compliant Server '''
+
 class ChargePoint(cp):
     cost='0'
     userName=''
@@ -123,8 +130,9 @@ class ChargePoint(cp):
     auth_time = 0
     end_time = 0
         
-'''  Essential OCPP messages  '''
+    '''  Essential OCPP messages  '''
 
+    # Used to notify starting of a session
     @on('BootNotification')
     async def on_boot_notitication(self, charging_station, reason, **kwargs):
         # print(charging_station['model'] + ' from ' + charging_station['vendor_name'] + ' has booted.')  
@@ -135,7 +143,7 @@ class ChargePoint(cp):
             status='Accepted'
         )
             
-
+    # Server checks if car has a valid entry in Database
     @on('Authorize')
     async def on_authorize(self, id_token, **kwargs):   
         name=id_token['id_token']
@@ -177,7 +185,7 @@ class ChargePoint(cp):
                 },
                 evse_id = [0]
             ) 
-
+    # Communication for PPUF authorization
     @on('DataTransfer')
     def data_transfer(self,data,vendor_id,**kwargs):
         if(self.db_auth):
@@ -188,13 +196,14 @@ class ChargePoint(cp):
                 self.challenge=[0,0,0,0,0,0,0,0,0,0,0,0]
                 for i in range(len(bn)):
                     self.challenge[12-len(bn)+i]=(ord(bn[i])-ord('0'))
-                # print(self.userName+"--> Challenge Generated-- " + str(self.challenge))
-                #Request model from database and validate user
+                print(self.userName+"--> Challenge Generated-- " + str(self.challenge))
+                                
                 # import fexpand as fe
                 # start_time = time.time()
                 # self.response_expand=fe.expand(self.challenge)
                 # self.time_expand=(time.time() - start_time)
 
+                # Request model from database and generate response
                 output=subprocess.Popen( ['python3', 'test_expand.py', str(self.challenge)], stdout=subprocess.PIPE ).communicate()[0]
                 arr=str(output).split("\\n")
                 response=arr[1].split()[:4]
@@ -211,7 +220,7 @@ class ChargePoint(cp):
                 # print(self.userName+"--> Response recorded--"+str(self.challenge))    
                 self.response_compact=data[:4]
                 self.time_compact=data[4]
-                # if (time_compact < time_expand) and time_compact<1e-4  and time_expand > 1e-5 and response_compact==response_expand:
+                # if (time_compact < time_expand) and time_compact<1e-4  and time_expand > 1e-5 and self.response_compact==self.response_expand:
                 if self.response_compact==self.response_expand:
                     # print("time_expand--"+str(self.time_expand))
                     # print("time_compact--"+str(self.time_compact))
@@ -240,6 +249,7 @@ class ChargePoint(cp):
                     data = 'Failed'
                 )
 
+    # Transaction begin communication (only after successful authentication)
     @on('TransactionEvent')
     async def transaction_event(self, event_type, timestamp, trigger_reason, seq_no, transaction_data, **kwargs):
         charge_req=seq_no
@@ -468,7 +478,7 @@ async def on_connect(websocket, path):
     await cp.start()
     
     
-
+'''  Setup for Secure websockets over TLS  '''
 ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
 ssl_context.load_cert_chain("cert.pem")
 
