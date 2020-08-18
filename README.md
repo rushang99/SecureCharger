@@ -9,7 +9,17 @@ Additional Libraries Required:
 2. Python Websockets (https://pypi.org/project/websockets/)
 3. Python MyHDL (http://www.myhdl.org/)
 
-## Setting up multi-host Hyperledger 
+Clone the project in the directory you want.
+```sh
+$ git clone https://github.com/rushang99/SecureCharger
+```
+## Setting up multi-host Hyperledger
+1. After installing the prerequisites, clone the latest version of hyeperledger fabric.
+```sh
+$ curl -sSL https://bit.ly/2ysbOFE | bash -s
+```
+2. Navigate to /fabric-samples/first-network. Modify the following files:
+  - abc
 
 ## Steps to run the server client system
 1. To create multiple car profiles for simulation, run [create_car_firebase.py](create_car_firebase.py) (if using firebase) or [create_car_sql.py](create_car_sql.py) (if using local sql database) with argument being the number of cars.
@@ -23,3 +33,8 @@ $ python3 server.py
 $ python3 multi_clients.py
 ```
 [fcompact.py](fcompact.py) contains the python implemented fast version of PUF and [fexpand.py](fexpand.py) contains the slow version of PUF. 
+
+[fcompact_hdl](fcompact_hdl.py) and [fexpand_hdl](fexpand_hdl.py) are the corresponding implementations using Python’s myHDL library for FPGA designs.
+
+[test_compact.py](test_compact.py) and [test_expand.py](test_expand.py) take a 12-bit challenge as a command line argument and generate a corresponding response using myHDL design of respective functions.
+
