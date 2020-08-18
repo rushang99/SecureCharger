@@ -1,5 +1,5 @@
 # Secure Charger [![python:v3.7](https://img.shields.io/badge/Python-v3.7-brightgreen.svg)](https://www.python.org/downloads/release/python-370/)
-A secure EV charging infrastructure which uses PPUF based authentication and blockchain-based solution to enforce non-repudiation
+A secure EV charging infrastructure which uses PPUF based authentication and blockchain-based solution to enforce non-repudiation.
 
 ## Requirements
 1. Python 3.7 or above
