@@ -14,10 +14,12 @@ Clone the project in the directory you want.
 $ git clone https://github.com/rushang99/SecureCharger
 ```
 ## Setting up multi-host Hyperledger
-After installing the prerequisites, clone the latest version of hyeperledger fabric.
+1. After installing the prerequisites, clone the latest version of hyeperledger fabric.
 ```sh
 $ curl -sSL https://bit.ly/2ysbOFE | bash -s
 ```
+2. Navigate to /fabric-samples/first-network. Modify the following files:
+  - abc
 
 ## Steps to run the server client system
 1. To create multiple car profiles for simulation, run [create_car_firebase.py](create_car_firebase.py) (if using firebase) or [create_car_sql.py](create_car_sql.py) (if using local sql database) with argument being the number of cars.
