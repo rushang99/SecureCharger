@@ -18,8 +18,13 @@ $ git clone https://github.com/rushang99/SecureCharger
 ```sh
 $ curl -sSL https://bit.ly/2ysbOFE | bash -s
 ```
-2. Navigate to /fabric-samples/first-network. Modify the following files:
-  - abc
+2. Navigate to /fabric-samples/first-network. Modify the IP addresses in the respective organization files and generate crypto files, channels, chaincode for all the peers.
+3. Bring up the network using
+```sh
+$ ./byfn.sh -n
+```
+4. Connect all the organizations to their respective channels and install chaincode by modifying and running script.sh
+5. Invoke and Query the chaincode using script.sh. Once they are successful, the hyperledger fabric is ready to be used.
 
 ## Steps to run the server client system
 1. To create multiple car profiles for simulation, run [create_car_firebase.py](create_car_firebase.py) (if using firebase) or [create_car_sql.py](create_car_sql.py) (if using local sql database) with argument being the number of cars.
