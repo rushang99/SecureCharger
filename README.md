@@ -23,7 +23,7 @@ $ curl -sSL https://bit.ly/2ysbOFE | bash -s
 ```sh
 $ ./byfn.sh up -n
 ```
-4. Connect all the organizations to their respective channels and install chaincode by modifying and running [script.sh](Hyperledger Fabric/first-network/scripts/script.sh)
+4. Connect all the organizations to their respective channels and install chaincode by modifying and running [script.sh](hyperledger_fabric/first-network/scripts/script.sh)
 5. Invoke and Query the chaincode using script.sh. Once they are successful, the hyperledger fabric is ready to be used.
 
 ## Steps to run the server client system
