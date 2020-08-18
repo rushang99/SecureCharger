@@ -1,5 +1,0 @@
-[2, "12345", "BootNotification", {"chargingStation": {"model": "12345678", "vendorName": "Central"}, "reason": "PowerUp"}]
-
-[2, "12345", "Authorize", {"idToken": {"idToken": "12345678", "type": "Central"}}]
-
-
