@@ -9,6 +9,12 @@ Additional Libraries Required:
 2. Python Websockets (https://pypi.org/project/websockets/)
 3. Python MyHDL (http://www.myhdl.org/)
 
+Clone the project in the directory you want.
+```sh
+$ git clone https://github.com/rushang99/SecureCharger
+$ cd EncryptedChat
+$ cd Combined
+```
 ## Setting up multi-host Hyperledger 
 
 ## Steps to run the server client system
