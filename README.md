@@ -19,3 +19,6 @@ $ python3 server.py
 ```
 3. Set the server’s public IP address in client.py
 4. Run [client.py](client.py) to simulate a single car/client or run [multi_clients.py](multi_clients.py) to simulate multiple cars/clients. Set the ‘num’ variable in [multi_cars.py](multi_clients.py) to run required number of clients 
+```sh
+$ python3 multi_clients.py
+```
