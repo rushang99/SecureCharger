@@ -20,7 +20,6 @@ import concurrent.futures
 import docker
 
 '''  For online Firebase Database(Optional) '''
-
 # config = {
 #     "apiKey": "AIzaSyAGas29t240FwqdvXjdwzz4kITTN2Ix1ro",
 #     "authDomain": "charger-1eb48.firebaseapp.com",
@@ -38,8 +37,10 @@ import docker
 # user = auth.sign_in_with_email_and_password(email,password)
 # db = firebase.database()
 
+
 '''  SQL Databse initialiazation '''
 conn = sqlite3.connect('cars.db')
+
 
 '''  Helper functions for Multi-threading  '''
 count=0
@@ -93,7 +94,7 @@ def help_authorize(name):
 def help_transaction_end(userName,initialCost,charge_requested,cert, count):
     count=count+1
     # subprocess.Popen(["../../hypledger/fabric-samples/fabcar/javascript/invoke.js", "CAR"+str(count) , str(charge_requested), str(cert), str(time.time()), userName])  
-    subprocess.Popen(["python3", "hyp_test.py", str(count)])
+    subprocess.Popen(["python3", "invoke.py", str(count)])
     print('Transaction Ended')
     conn = sqlite3.connect('cars.db')
     cur = conn.cursor()
