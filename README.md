@@ -27,7 +27,6 @@ $ python3 server.py
 $ python3 multi_clients.py
 ```
 [fcompact.py](fcompact.py) contains the python implemented fast version of PUF and [fexpand.py](fexpand.py) contains the slow version of PUF. 
-
-
-[fcompact_hdl](fcompact_hdl.py) and [fexpand_hdl](fexpand_hdl.py) are the corresponding implementations using Python’s myHDL library for FPGA designs. [test_compact.py](test_compact.py) and [test_expand.py](test_expand.py) take a 12-bit challenge as a command line argument and generate a corresponding response using myHDL design of respective functions.
+[fcompact_hdl](fcompact_hdl.py) and [fexpand_hdl](fexpand_hdl.py) are the corresponding implementations using Python’s myHDL library for FPGA designs.
+[test_compact.py](test_compact.py) and [test_expand.py](test_expand.py) take a 12-bit challenge as a command line argument and generate a corresponding response using myHDL design of respective functions.
 
