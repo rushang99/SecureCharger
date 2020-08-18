@@ -21,7 +21,7 @@ $ curl -sSL https://bit.ly/2ysbOFE | bash -s
 2. Navigate to /fabric-samples/first-network. Modify the IP addresses in the respective organization files and generate crypto files, channels, chaincode for all the peers.
 3. Bring up the network using
 ```sh
-$ ./byfn.sh -n
+$ ./byfn.sh up -n
 ```
 4. Connect all the organizations to their respective channels and install chaincode by modifying and running script.sh
 5. Invoke and Query the chaincode using script.sh. Once they are successful, the hyperledger fabric is ready to be used.
