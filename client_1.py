@@ -33,8 +33,7 @@ charge_req=data["Amount"]
 
 class ChargePoint(cp):
 
-'''  Essential OCPP messages  '''
-
+    '''  Essential OCPP messages  '''
     async def send_boot_notification(self,model,vendorName,reason):
         global prev_msg_done
 
@@ -52,8 +51,8 @@ class ChargePoint(cp):
         
         if response.status == 'Accepted':
             prev_msg_done = True
-            # print("Connected to central system.")
-            # print("Response-- "+str(response))
+            print("Connected to central system.")
+            print("Response-- "+str(response))
 
         
 
@@ -75,17 +74,17 @@ class ChargePoint(cp):
             auth_flag = True
             balance=response.evse_id[0]
             prev_msg_done = True
-            # print(idToken+"-->Authorization Sucessful")
+            print(idToken+"-->Authorization Sucessful")
 
         elif response.id_token_info['status'] == 'Invalid':
             auth_flag=False
             balance=0
-            # print("Invalid Name/Id. Please try again!")
+            print("Invalid Name/Id. Please try again!")
 
         elif response.id_token_info['status'] == 'NotAtThisLocation':
             auth_flag=False
             balance=0
-            # print("The user is already Authorized elsewhere. Please wait and try again later!!!")  
+            print("The user is already Authorized elsewhere. Please wait and try again later!!!")  
 
 
     async def send_transaction_event(self,eventType,triggerReason,seqNo,id):
@@ -106,17 +105,15 @@ class ChargePoint(cp):
         )
         prev_msg_done = True
         response = await self.call(request)
-        # if response.charging_priority==-1:
-            # print("Sufficient balance not available")
-            # sys.exit(0)
-        # elif response.charging_priority==9:
-            # print("Transaction Started worth amount-- "+str(response.total_cost))
-        # elif response.charging_priority==0:
-            # print("Cannot start transaction")
-        # elif response.charging_priority==-9:
-        if response.charging_priority==-9:
+        if response.charging_priority==-1:
+            print("Sufficient balance not available")
+            sys.exit(0)
+        elif response.charging_priority==9:
+            print("Transaction Started worth amount-- "+str(response.total_cost))
+        elif response.charging_priority==0:
+            print("Cannot start transaction")
+        elif response.charging_priority==-9:
             print("Charging finished worth-- "+str(response.total_cost))
-            # sys.exit(0)
             
 
 
@@ -154,7 +151,7 @@ class ChargePoint(cp):
         
         if(response.status=='Rejected' and response.data!="Failed"):
             challenge=response.data
-            # print("Challenge recieved-- "+ str(challenge))
+            print("Challenge recieved-- "+ str(challenge))
             
             import fcompact as fc           
             start_time = time.time()
@@ -188,9 +185,8 @@ class ChargePoint(cp):
             resp.append(time_taken)
             
             response_done=True     
-            # print(str(response)+" "+str(time_elapsed))
-
-            # print("Response Recorded")
+            print(str(response)+" "+str(time_elapsed))
+            print("Response Recorded")
             
             response_done=True
 
@@ -198,15 +194,15 @@ class ChargePoint(cp):
             puff_auth=True
             prev_msg_done = True
             authorization_done=True
-            # print("PUF Authorization Successful")
+            print("PUF Authorization Successful")
 
         elif response.status=="Rejected" and response.data=="Failed":            
             puff_auth=False
             authorization_done=False
-            # print("PUF Authorization Unsuccessful")
+            print("PUF Authorization Unsuccessful")
 
-        # else:
-            # print(response.data)
+        else:
+            print(response.data)
 
 ''' Other OCPP messages  '''
 
@@ -215,9 +211,9 @@ class ChargePoint(cp):
                 reservation_id= reservId
         )
         response = await self.call(request)
-        # if response.status == 'Accepted':
-        #     # print("Reservation Cancelled")
-        #     # print(response) 
+        if response.status == 'Accepted':
+            print("Reservation Cancelled")
+            print(response) 
 
     async def send_set_variables(self):
         request = call.SetVariablesPayload(
@@ -225,9 +221,9 @@ class ChargePoint(cp):
         )
         response = await self.call(request)
 
-        # if response.set_variable_result[0]['attribute_status'] == 'Accepted':
-        #     # print("Variables Set")
-        #     # print(response) 
+        if response.set_variable_result[0]['attribute_status'] == 'Accepted':
+            print("Variables Set")
+            print(response) 
         
     async def send_get_variables(self):
         request = call.GetVariablesPayload(
@@ -235,9 +231,9 @@ class ChargePoint(cp):
         )
         response = await self.call(request)
 
-        # if response.get_variable_result[0]['attribute_status'] == 'Accepted':
-        #     # print("Variables Recieved")
-        #     # print(response) 
+        if response.get_variable_result[0]['attribute_status'] == 'Accepted':
+            print("Variables Recieved")
+            print(response) 
 
     async def send_get_report(self, reportId):
         request = call.GetReportPayload(
@@ -245,9 +241,9 @@ class ChargePoint(cp):
         )
         response = await self.call(request)
 
-        # if response.status == 'Accepted':
-        #     # print("Report Recieved")
-        #     # print(response)
+        if response.status == 'Accepted':
+            print("Report Recieved")
+            print(response)
 
     async def send_reset(self,typee):
         request = call.ResetPayload(
@@ -255,9 +251,9 @@ class ChargePoint(cp):
         )
         response = await self.call(request)
 
-        # if response.status=='Accepted':
-        #     # print('Resetting')
-        #     # print(response)
+        if response.status=='Accepted':
+            print('Resetting')
+            print(response)
 
     async def send_change_availability(self,id,status):
         request = call.ChangeAvailabilityPayload(
@@ -265,10 +261,10 @@ class ChargePoint(cp):
                 evse_id=id
         )
         response = await self.call(request)
+        if response.status=='Accepted':
+            print('Changing availability')
+            print(response)
 
-        # if response.status=='Accepted':
-        #     # print('Changing availability')
-        #     # print(response)
 
     async def send_status_notification(self,status,evse_id,connector_id):
         request = call.StatusNotificationPayload(
@@ -278,8 +274,8 @@ class ChargePoint(cp):
                 connector_id=connector_id
         )
         response = await self.call(request)
+        print(response)
 
-        # print(response)
 
     async def send_notify_event(self,tbc,seqNo,trigger,actualValue,cleared,eventNotificationType,componentName,variableName):
         request = call.NotifyEventPayload(
@@ -289,8 +285,8 @@ class ChargePoint(cp):
                 event_data=[{'eventId': 1234, 'timestamp': 'datetime', 'trigger': trigger, 'actualValue': actualValue,'cleared': cleared, 'eventNotificationType': eventNotificationType, 'component': {'name': componentName}, 'variable': {'name': variableName}}]
         )
         response = await self.call(request)
+        print(response)
 
-        # print(response)
 
     async def send_clear_cache(self):
         request = call.ClearCachePayload(
@@ -422,10 +418,8 @@ async def main():
             # rec = await websocket.recv()
             # data=eval(rec)
             # print(f"< {rec}") 
-
         
         await asyncio.gather(cp.start(),cp.send_boot_notification(model,vendorName,'PowerUp'),cp.send_authorize(name, 'Central'),cp.send_data_transfer("Request Challenge","Challenge"),cp.send_data_transfer(resp,"Challenge Sent"),cp.send_transaction_event('Started', 'Authorized', int(charge_req), 'Hello World'),cp.send_transaction_event('Ended', 'EVDeparted', 1234, 'Hello World'))
-        # await asyncio.gather(cp.start(),cp.send_boot_notification(model,vendorName,'PowerUp'))
 
 
 if __name__ == '__main__':         
