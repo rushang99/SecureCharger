@@ -11,4 +11,4 @@ Additional Libraries Required:
 ## Setting up multi-host Hyperledger 
 
 ## Steps to run the server client system
-1. To create multiple car profiles for simulation, run
+1. To create multiple car profiles for simulation, run create_car_firebase.py (if using firebase) or create_car_sql (if using local sql database) with argument as the number of cars.
