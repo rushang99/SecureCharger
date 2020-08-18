@@ -34,6 +34,8 @@ charge_req=data["Amount"]
 class ChargePoint(cp):
 
 
+'''  Essential OCPP messages  '''
+
     async def send_boot_notification(self,model,vendorName,reason):
         global prev_msg_done
 
@@ -206,8 +208,185 @@ class ChargePoint(cp):
         # else:
             # print(response.data)
 
+''' Other OCPP messages  '''
 
+    async def send_cancel_reservation(self, reservId):
+        request = call.CancelReservationPayload(
+                reservation_id= reservId
+        )
+        response = await self.call(request)
+        # if response.status == 'Accepted':
+        #     # print("Reservation Cancelled")
+        #     # print(response) 
 
+    async def send_set_variables(self):
+        request = call.SetVariablesPayload(
+                set_variable_data=[{'attributeValue': 'str', 'component': {'name': 'comp'}, 'variable': {'name': 'var'}}]
+        )
+        response = await self.call(request)
+
+        # if response.set_variable_result[0]['attribute_status'] == 'Accepted':
+        #     # print("Variables Set")
+        #     # print(response) 
+        
+    async def send_get_variables(self):
+        request = call.GetVariablesPayload(
+                get_variable_data=[{'component': {'name': 'comp'}, 'variable': {'name': 'var'}}]
+        )
+        response = await self.call(request)
+
+        # if response.get_variable_result[0]['attribute_status'] == 'Accepted':
+        #     # print("Variables Recieved")
+        #     # print(response) 
+
+    async def send_get_report(self, reportId):
+        request = call.GetReportPayload(
+                request_id = reportId
+        )
+        response = await self.call(request)
+
+        # if response.status == 'Accepted':
+        #     # print("Report Recieved")
+        #     # print(response)
+
+    async def send_reset(self,typee):
+        request = call.ResetPayload(
+                type=typee
+        )
+        response = await self.call(request)
+
+        # if response.status=='Accepted':
+        #     # print('Resetting')
+        #     # print(response)
+
+    async def send_change_availability(self,id,status):
+        request = call.ChangeAvailabilityPayload(
+                operational_status=status,
+                evse_id=id
+        )
+        response = await self.call(request)
+
+        # if response.status=='Accepted':
+        #     # print('Changing availability')
+        #     # print(response)
+
+    async def send_status_notification(self,status,evse_id,connector_id):
+        request = call.StatusNotificationPayload(
+                timestamp=datetime.utcnow().isoformat(),
+                connector_status=status,
+                evse_id=evse_id,
+                connector_id=connector_id
+        )
+        response = await self.call(request)
+
+        # print(response)
+
+    async def send_notify_event(self,tbc,seqNo,trigger,actualValue,cleared,eventNotificationType,componentName,variableName):
+        request = call.NotifyEventPayload(
+                generated_at=datetime.utcnow().isoformat(),
+                tbc=tbc,
+                seq_no=seqNo,
+                event_data=[{'eventId': 1234, 'timestamp': 'datetime', 'trigger': trigger, 'actualValue': actualValue,'cleared': cleared, 'eventNotificationType': eventNotificationType, 'component': {'name': componentName}, 'variable': {'name': variableName}}]
+        )
+        response = await self.call(request)
+
+        # print(response)
+
+    async def send_clear_cache(self):
+        request = call.ClearCachePayload(
+            
+        )
+        response = await self.call(request)
+
+        print(response)
+
+    async def send_clear_charging_profile(self,evseid):
+        request = call.ClearChargingProfilePayload(
+            evse_id=evseid
+        )
+        response = await self.call(request)
+
+        print(response)
+
+    async def send_clear_display_message(self,id):
+        request = call.ClearDisplayMessagePayload(
+            id=id
+        )
+        response = await self.call(request)
+
+        print(response)
+
+    async def send_clear_variable_monitoring(self,id):
+        request = call.ClearVariableMonitoringPayload(
+            id=id
+        )
+        response = await self.call(request)
+
+        print(response)
+
+    async def send_cost_updated(self,totalCost,transactionId):
+        request = call.CostUpdatedPayload(
+            total_cost=totalCost,
+            transaction_id=transactionId
+        )
+        response = await self.call(request)
+
+        print(response)
+
+    async def send_firmware_status_notification(self,status,requestid):
+        request = call.FirmwareStatusNotificationPayload(
+            request_id=requestid,
+            status=status
+        )
+        response = await self.call(request)
+
+        print(response)
+
+    async def send_get_charging_profiles(self,chargingProfile):
+        request = call.GetChargingProfilesPayload(
+            charging_profile=chargingProfile
+        )
+        response = await self.call(request)
+
+        print(response)
+
+    async def send_get_composite_schedule(self,evseid,duration):
+        request = call.GetCompositeSchedulePayload(
+            evse_id=evseid,
+            duration=duration
+        )
+        response = await self.call(request)
+
+        print(response)
+
+    async def send_get_display_messages(self,requestid):
+        request = call.GetDisplayMessagesPayload(
+            request_id=requestid
+        )
+        response = await self.call(request)
+
+        print(response)
+
+    async def send_get_local_list_version(self):
+        request = call.GetLocalListVersionPayload(
+            
+        )
+        response = await self.call(request)
+        print(response)
+
+    async def send_get_monitoring_report(self,requestid):
+        request = call.GetMonitoringReportPayload(
+            request_id=requestid
+        )
+        response = await self.call(request)
+        print(response)
+
+    async def send_get_transaction_status(self,transactionId):
+        request = call.GetTransactionStatusPayload(
+            transaction_id=transactionId
+        )
+        response = await self.call(request)
+        print(response)        
 
 
 ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
