@@ -27,6 +27,8 @@ $ ./byfn.sh up -n
 4. Connect all the organizations to their respective channels and install chaincode by modifying and running [script.sh](hyperledger_fabric/first-network/scripts/script.sh)
 5. Invoke and Query the chaincode using [script.sh](hyperledger_fabric/first-network/scripts/script.sh). Once they are successful, the hyperledger fabric is ready to be used.
 
+More details on setting up multi-host hyperledger can be found [here](https://docs.google.com/presentation/d/1lzhGvC3QxI3o2upCAuMkTOndjDRULfdh7Yh_A8c2bRQ/edit?usp=sharing).
+
 ## Steps to run the server client system
 1. To create multiple car profiles for simulation, run [create_car_firebase.py](create_car_firebase.py) (if using firebase) or [create_car_sql.py](create_car_sql.py) (if using local sql database) with argument being the number of cars.
 2. Run server.py
